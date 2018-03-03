@@ -26,10 +26,22 @@ for i in range(0, len(best_books_url_list)):
             book_page_url = good_reads_home_url + details.xpath("./a/@href")[0]
             book_page_req = requests.get(book_page_url)
             tree_book = lxml.html.fromstring(book_page_req.content)
-            isbn = tree_book.xpath("//div[@class='infoBoxRowItem']")[1].text_content().rstrip()
-            if ":" in isbn:
-                index = isbn.find(":")
-                isbn = isbn[index+2:len(isbn) - 1]
+            info_titles = tree_book.xpath("//div[@class='infoBoxRowTitle']")
+            isbn_index = -1
+            isbn_found = False
+            for info_title in info_titles:
+                isbn_index += 1
+                title = info_title.text_content().rstrip()
+                if title == "ISBN" or title == "ISBN13":
+                    isbn_found = True
+                    break
+            if not isbn_found:
+                isbn = -1
+            else:
+                isbn = tree_book.xpath("//div[@class='infoBoxRowItem']")[isbn_index].text_content().rstrip()
+                if ":" in isbn:
+                    index = isbn.find(":")
+                    isbn = isbn[index+2:len(isbn) - 1]
             desc_div = tree_book.xpath("//div[@id='description']")[0]
             description = desc_div.xpath("./span")[-1].text_content().rstrip()
             out.writerow([book_title, isbn, description, book_page_url])
