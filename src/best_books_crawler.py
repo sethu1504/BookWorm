@@ -6,7 +6,7 @@ import codecs
 from url_constants import *
 
 out = csv.writer(codecs.open("../data/books.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
-out.writerow(["Book Title", "ISBN", "Author", "Language" "Pages", "Publication", "Publish Date", "Description",
+out.writerow(["Book Title", "ISBN", "Author", "Language", "Pages", "Publication", "Publish Date", "Description",
               "Genres", "Book URL"])
 
 no_of_books_in_each_decade = 200
