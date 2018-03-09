@@ -7,7 +7,7 @@ from url_constants import *
 
 out = csv.writer(codecs.open("../data/books.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
 out.writerow(["Book Title", "ISBN", "Author", "Language", "Pages", "Publication", "Publish Date", "Description",
-              "Genres", "Book URL"])
+              "Genres", "Book URL", "Amazon URL"])
 
 no_of_books_in_each_decade = 200
 num_pages = int(no_of_books_in_each_decade / 100)
@@ -62,6 +62,11 @@ for i in range(0, len(best_books_url_list)):
             if lang_index >= 0:
                 language = tree_book.xpath("//div[@class='infoBoxRowItem']")[lang_index].text_content().rstrip()
 
+            amazon_url = ""
+            amazon_buy_button = tree_book.xpath("//a[@id='buyButton']")
+            if len(amazon_buy_button) > 0:
+                amazon_url = good_reads_home_url + amazon_buy_button[0].xpath("@href")[0].strip()
+
             genre_list = []
             genre_divs = tree_book.xpath("//a[@class='actionLinkLite bookPageGenreLink']")
             for genre in genre_divs:
@@ -71,7 +76,7 @@ for i in range(0, len(best_books_url_list)):
             description = desc_div.xpath("./span")[-1].text_content().rstrip()
 
             out.writerow([book_title, isbn, author, language, pages, publication, publish_date, description, genre_list,
-                          book_page_url])
+                          book_page_url, amazon_url])
 
         scheme, netloc, path, query_string, fragment = urlsplit(next_url)
         query_params = parse_qs(query_string)
