@@ -9,6 +9,7 @@ from selenium.common.exceptions import NoSuchElementException
 from urllib.parse import urlencode, parse_qs, urlsplit, urlunsplit
 import csv
 import codecs
+import numpy as np
 
 def get_price_amazon(amazon_url):
     amazon_book = requests.get(amazon_url)
@@ -107,7 +108,9 @@ time.sleep(3)
 # Now we are logged into Riffle.
 # We can start scrapping using ISBN.
 
-df = pd.read_csv('../data/books.csv')
+df = pd.read_csv('../data/description.csv')
+df['Riffle Description'] = ""
+
 df_prices = pd.DataFrame(columns=['Book Title','ISBN','Book Image','Amazon','Google Play','Barnes and Noble','Indie Bound'])
 
 list_ISBN = list(df.ISBN.values)
@@ -121,7 +124,6 @@ for index, row in df.iterrows():
 
     ISBN = row['ISBN']
     title = row['Book Title']
-
 
     input_search_ISNB = browser.find_element_by_xpath('//*[@id="navSearchField"]')
     input_search_ISNB.send_keys(ISBN)
@@ -167,6 +169,8 @@ for index, row in df.iterrows():
     riffle_book_descr = tree.xpath('/html/body/div[4]/div[2]/div[1]/div[3]/h4/text()')
     riffle_book_description = ''.join(riffle_book_descr).strip()
 
+    df.set_value(index, 'Riffle Description', riffle_book_description)
+
     try:
         price_amazon = get_price_amazon(amazon_url)
     except:
@@ -197,6 +201,8 @@ for index, row in df.iterrows():
     print(price_amazon, price_google, price_barnes, price_indie)
 
     df_prices = df_prices.append({'Book Title': title, 'ISBN': ISBN, 'Book Image': book_image_url, 'Amazon': price_amazon, 'Google Play': price_google, 'Barnes and Noble': price_barnes, 'Indie Bound': price_indie}, ignore_index=True)
+
+df.to_csv('../data/decription_goodreads_riffle.csv')
 
 df_prices.to_csv('../data/image_and_prices.csv')
 
