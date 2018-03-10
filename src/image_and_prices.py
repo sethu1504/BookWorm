@@ -164,6 +164,9 @@ for index, row in df.iterrows():
     book_image = tree.xpath('/html/body/div[4]/div[2]/div[1]/div[1]/img/@src')
     book_image_url = ''.join(book_image)
 
+    riffle_book_descr = tree.xpath('/html/body/div[4]/div[2]/div[1]/div[3]/h4/text()')
+    riffle_book_description = ''.join(riffle_book_descr).strip()
+
     try:
         price_amazon = get_price_amazon(amazon_url)
     except:
@@ -185,11 +188,12 @@ for index, row in df.iterrows():
     except:
         print("Price not found on Indie Bound")
 
+    print(ISBN)
     print(amazon_url)
     print(google_play_url)
     print(barnes_and_noble_url)
     print(indie_bound_url)
-
+    print(riffle_book_description)
     print(price_amazon, price_google, price_barnes, price_indie)
 
     df_prices = df_prices.append({'Book Title': title, 'ISBN': ISBN, 'Book Image': book_image_url, 'Amazon': price_amazon, 'Google Play': price_google, 'Barnes and Noble': price_barnes, 'Indie Bound': price_indie}, ignore_index=True)
@@ -197,3 +201,5 @@ for index, row in df.iterrows():
 df_prices.to_csv('../data/image_and_prices.csv')
 
 # df_prices contains Book Title, ISBN, Book Image, Amazon, Google Play, Barnes and Noble, Indie Bound
+
+
