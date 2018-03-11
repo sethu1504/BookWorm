@@ -23,6 +23,9 @@ def give_clean_words_list(text):
     clean_words = []
     for word in words:
         if word not in stop_words and word not in name_list:
-            clean_words.append(word)
-    clean_words = [lmtzr.lemmatize(w, 'v') for w in clean_words]
+            lemm_word = lmtzr.lemmatize(word, 'v')
+            if lemm_word == word:
+                clean_words.append(lmtzr.lemmatize(word))
+            else:
+                clean_words.append(lemm_word)
     return clean_words
