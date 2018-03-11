@@ -169,7 +169,8 @@ for index, row in df.iterrows():
     riffle_book_descr = tree.xpath('/html/body/div[4]/div[2]/div[1]/div[3]/h4/text()')
     riffle_book_description = ''.join(riffle_book_descr).strip()
 
-    df.set_value(index, 'Riffle Description', riffle_book_description)
+    # df.set_value(index, 'Riffle Description', riffle_book_description)
+    df.at[index, 'Riffle Description'] = riffle_book_description
 
     try:
         price_amazon = get_price_amazon(amazon_url)
