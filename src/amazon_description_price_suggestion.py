@@ -68,10 +68,11 @@ def get_amazon_price(amazon_url, browser):
         except:
             return 'NaN'
 
-def get_amazon_suggestions(amazon_url, total_suggestions):
+def get_amazon_suggestions(amazon_url, total_suggestions, browser):
 
-    # browser.get(amazon_url)
-    time.sleep(2)
+    if not browser:
+        browser.get(amazon_url)
+
     suggestion_data =  dict()                       # Dictionary
     number_of_suggestions = total_suggestions +1
 
@@ -84,57 +85,111 @@ def get_amazon_suggestions(amazon_url, total_suggestions):
             suggestion_data[suggestion_title] = suggestion_url
 
         except:
-            return suggestion_data
+            continue
 
     return suggestion_data
 
-def get_amazon_description(amazon_url):
-    browser.get(amazon_url)
 
 
 
 
 
-# ----- main -----
+
+
+
+
+
+
+
+
+
+
+
+
+def get_amazon_description(amazon_url, selenium_instance):
+
+    # if not selenium_instance:
+    #     browser.get(amazon_url)
+
+    browser.switch_to.frame(browser.find_element_by_css_selector("#bookDesc_iframe"))  # To switch to iframe
+
+    desc = browser.find_element_by_xpath('//*[@id="iframeContent"]').text
+
+
+    print(desc)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 browser = webdriver.Firefox(executable_path='/home/ldua/geckodriver')
-
 df = pd.read_csv('../data/description.csv')
 
 for index, row in df.iterrows():
 
-    good_reads_amazon_url = 'https://www.amazon.com/gp/product/0765356155/ref=x_gr_w_bb?ie=UTF8&tag=x_gr_w_bb-20&linkCode=as2&camp=1789&creative=9325&creativeASIN=0765356155&SubscriptionId=1MGPYB6YW3HWK55XCGG2'
-    # good_reads_amazon_url = row['Amazon URL']
-    # To handle amazon.in and amazon.ca prices
+    # good_reads_amazon_url = 'https://www.amazon.com/gp/product/B073TJBYTB/ref=amb_link_3?pf_rd_m=ATVPDKIKX0DER&pf_rd_s=hero-quick-promo&pf_rd_r=NZMCWJV8Q91PG0F29997&pf_rd_r=NZMCWJV8Q91PG0F29997&pf_rd_t=201&pf_rd_p=1aeb5983-d340-458e-a130-2b54e81d5b71&pf_rd_p=1aeb5983-d340-458e-a130-2b54e81d5b71&pf_rd_i=B019E9WCKI'
+
+    good_reads_amazon_url = row['Amazon URL']
+
+    # To handle amazon.in / amazon.ca / amazon.co.uk / amazon.fr links
 
     browser.get(good_reads_amazon_url)
     amazon_url = browser.current_url
 
     if '.com' not in amazon_url:
         if 'amazon.in' in amazon_url:
-            new_url = amazon_url.replace('amazon.in', 'amazon.com')
-            browser.get(new_url)
+            amazon_url = amazon_url.replace('amazon.in', 'amazon.com')
+            browser.get(amazon_url)
 
         elif 'amazon.ca' in amazon_url:
-            new_url = amazon_url.replace('amazon.ca', 'amazon.com')
-            browser.get(new_url)
+            amazon_url = amazon_url.replace('amazon.ca', 'amazon.com')
+            browser.get(amazon_url)
 
         elif 'amazon.co.uk' in amazon_url:
-            new_url = amazon_url.replace('amazon.co.uk', 'amazon.com')
-            browser.get(new_url)
+            amazon_url = amazon_url.replace('amazon.co.uk', 'amazon.com')
+            browser.get(amazon_url)
 
         elif 'amazon.fr' in amazon_url:
-            new_url = amazon_url.replace('amazon.fr', 'amazon.com')
-            browser.get(new_url)
-    else:
-        new_url = amazon_url
+            amazon_url = amazon_url.replace('amazon.fr', 'amazon.com')
+            browser.get(amazon_url)
 
-    # amazon_price = get_amazon_price(amazon_url)
-    suggestion_dict = get_amazon_suggestions(new_url, 5)
-    print('---MAIN BOOK---')
-    print(new_url)
-    # print(amazon_price)
-    for v in suggestion_dict.values():
-        print(v)
+    # amazon_price = get_amazon_price(amazon_url, True)
+    # suggestion_dict = get_amazon_suggestions(amazon_url, 5, True)
+    # amazon_description = get_amazon_description(amazon_url, True)
+
+
+
 
 
