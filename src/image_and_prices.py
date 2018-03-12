@@ -11,37 +11,6 @@ import csv
 import codecs
 import numpy as np
 
-def get_price_amazon(amazon_url):
-    amazon_book = requests.get(amazon_url)
-    tree = lxml.html.fromstring(amazon_book.content)
-    time.sleep(2)
-
-    price = tree.xpath('//*[@id="buybox"]/div/table/tbody/tr[2]/td[2]/text()')
-    if price == []:
-        price = tree.xpath('//*[@id="buyNewSection"]/a/h5/div/div[2]/div/span[2]/text()')
-
-    if price == []:
-        price = tree.xpath('//*[@id="buyNewSection"]/h5/div/div[2]/div/span[2]/text()')
-
-    if price == []:
-        price = tree.xpath('//*[@id="usedBuySection"]/h5/div/div[2]/div/span[2]/text()')
-
-    elif price == []:
-        print("Amazon price not found")
-        return 'NaN'
-
-    str_price = ''.join(price)
-
-    regex_amazon_price = re.findall('(\$\d+[.]\d+)', str_price)
-    amazon_price = ''.join(regex_amazon_price)
-
-    if amazon_price == '':
-        return 'NaN'
-    else:
-        return amazon_price
-
-
-
 def get_price_google_play(google_play_url):
     google_play = requests.get(google_play_url)
     tree = lxml.html.fromstring(google_play.content)
@@ -111,7 +80,7 @@ time.sleep(3)
 df = pd.read_csv('../data/description.csv')
 df['Riffle Description'] = ""
 
-df_prices = pd.DataFrame(columns=['Book Title','ISBN','Book Image','Amazon','Google Play','Barnes and Noble','Indie Bound'])
+df_prices = pd.DataFrame(columns=['Book Title','ISBN','Book Image','Google Play','Barnes and Noble','Indie Bound'])
 
 list_ISBN = list(df.ISBN.values)
 
@@ -137,9 +106,9 @@ for index, row in df.iterrows():
     time.sleep(2)
 
     if browser.current_url == riffle_book_url:
-        price_amazon, price_google, price_barnes, price_indie, book_image_url = 'NaN','NaN','NaN','NaN','NaN'
+        price_google, price_barnes, price_indie, book_image_url = 'NaN','NaN','NaN','NaN'
         df_prices = df_prices.append(
-            {'Book Title': title, 'ISBN': ISBN, 'Book Image': book_image_url, 'Amazon': price_amazon,
+            {'Book Title': title, 'ISBN': ISBN, 'Book Image': book_image_url,
              'Google Play': price_google, 'Barnes and Noble': price_barnes, 'Indie Bound': price_indie},
             ignore_index=True)
         continue
@@ -150,9 +119,6 @@ for index, row in df.iterrows():
 
     riffle_book = requests.get(riffle_book_url)
     tree = lxml.html.fromstring(riffle_book.content)
-
-    amazon = tree.xpath('//div[@id="menuBuy"]/ul/li/a[contains(text(), "Amazon")]/@href')
-    amazon_url = ''.join(amazon)            # to remove brackets
 
     google_play = tree.xpath('//div[@id="menuBuy"]/ul/li/a[contains(text(), "Google Play")]/@href')
     google_play_url = ''.join(google_play)
@@ -173,12 +139,6 @@ for index, row in df.iterrows():
     df.at[index, 'Riffle Description'] = riffle_book_description
 
     try:
-        price_amazon = get_price_amazon(amazon_url)
-    except:
-        price_amazon = 'NaN'
-        print("Price not found on Amazon")
-
-    try:
         price_google = get_price_google_play(google_play_url)
     except:
         print("Price not found on Google Play Books")
@@ -194,19 +154,18 @@ for index, row in df.iterrows():
         print("Price not found on Indie Bound")
 
     print(ISBN)
-    print(amazon_url)
     print(google_play_url)
     print(barnes_and_noble_url)
     print(indie_bound_url)
     print(riffle_book_description)
-    print(price_amazon, price_google, price_barnes, price_indie)
+    print(price_google, price_barnes, price_indie)
 
-    df_prices = df_prices.append({'Book Title': title, 'ISBN': ISBN, 'Book Image': book_image_url, 'Amazon': price_amazon, 'Google Play': price_google, 'Barnes and Noble': price_barnes, 'Indie Bound': price_indie}, ignore_index=True)
+    df_prices = df_prices.append({'Book Title': title, 'ISBN': ISBN, 'Book Image': book_image_url, 'Google Play': price_google, 'Barnes and Noble': price_barnes, 'Indie Bound': price_indie}, ignore_index=True)
 
 df.to_csv('../data/description_goodreads_riffle.csv')
 
 df_prices.to_csv('../data/image_and_prices.csv')
 
-# df_prices contains Book Title, ISBN, Book Image, Amazon, Google Play, Barnes and Noble, Indie Bound
+# df_prices contains Book Title, ISBN, Book Image, Google Play, Barnes and Noble, Indie Bound
 
 
