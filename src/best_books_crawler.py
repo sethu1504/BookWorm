@@ -63,7 +63,7 @@ def scrape_book_details(isbn, book_title):
     goodreads_id = requests.get(good_reads_isbn_to_id + isbn).text
     book_url = good_reads_home_url + "/book/show/" + goodreads_id
 
-    out = csv.writer(codecs.open("../data/books3.csv", "a", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
+    out = csv.writer(codecs.open("../data/books.csv", "a", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
     out_desc = csv.writer(codecs.open("../data/description.csv", "a", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
     out.writerow(["Book Title", "ISBN", "Author", "Language", "Pages", "Publication", "Publish Date",
                   "Genres", "Book URL"])
