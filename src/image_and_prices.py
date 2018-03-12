@@ -203,7 +203,7 @@ for index, row in df.iterrows():
 
     df_prices = df_prices.append({'Book Title': title, 'ISBN': ISBN, 'Book Image': book_image_url, 'Amazon': price_amazon, 'Google Play': price_google, 'Barnes and Noble': price_barnes, 'Indie Bound': price_indie}, ignore_index=True)
 
-df.to_csv('../data/decription_goodreads_riffle.csv')
+df.to_csv('../data/description_goodreads_riffle.csv')
 
 df_prices.to_csv('../data/image_and_prices.csv')
 
