@@ -121,5 +121,5 @@ readgeek_df = readgeek_df.loc[~readgeek_df.index.duplicated(keep='first')]
 main_desc_df = main_desc_df.loc[~main_desc_df.index.duplicated(keep='first')]
 main_desc_df = pd.concat([main_desc_df, wiki_df, readgeek_df], axis=1)
 
-main_desc_df.to_csv('../data/description_readgeek_wikipedia.csv', encoding='utf-8', index=False)
+main_desc_df.to_csv('../data/description_wikipedia_readgeek.csv', encoding='utf-8', index=False)
 # remove Book, Description, name of the book
