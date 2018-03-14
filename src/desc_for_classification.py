@@ -1,25 +1,31 @@
 import requests
 import lxml.html
 from urllib.parse import urlencode, parse_qs, urlsplit, urlunsplit
-import csv
 import codecs
 from url_constants import *
 from clean_text import give_clean_words_list
 
-genre_list = ["crime", "fiction"]
+genre_list = ["crime", "fiction", "fantasy", "young-adult", "romance", "comedy", "dystopia",
+              "action", "historical", "non-fiction"]
 
-number_of_books_per_genre = 100
+number_of_books_per_genre = 500
 iterations = int(number_of_books_per_genre / 20)
 
 for genre in genre_list:
-    text_file = codecs.open("../data/" + genre + "_words.txt", "w", "utf-8")
+    print(genre)
+    text_file = codecs.open("../data/word_bags/" + genre + "_words.txt", "w", "utf-8")
     scheme, netloc, path, query_string, fragment = urlsplit(good_reads_explore_genre)
     query_params = parse_qs(query_string)
-    query_params["search[query]"] = genre
+    if '+' in genre or '-' in genre:
+        query_params['q'] = genre
+    else:
+        query_params["search[query]"] = genre
     new_query_string = urlencode(query_params, doseq=True)
     url = urlunsplit((scheme, netloc, path, new_query_string, fragment))
+    print(url)
 
     for i in range(iterations):
+        print(i)
         r = requests.get(url)
         tree = lxml.html.fromstring(r.content)
 
