@@ -77,22 +77,32 @@ time.sleep(3)
 # Now we are logged into Riffle.
 # We can start scrapping using ISBN.
 
-df = pd.read_csv('../data/description.csv')
-df['Riffle Description'] = ""
+# df = pd.read_csv('../data/description.csv')
+# df['Riffle Description'] = ""
 
-df_prices = pd.DataFrame(columns=['Book Title','ISBN','Book Image','Google Play','Barnes and Noble','Indie Bound'])
+v = open('../data/description.csv')
+r = csv.reader(v)
+# row0 = next(r)
+# row0.append('Riffle Description')
+out_description = csv.writer(codecs.open("../data/description_goodreads_riffle", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
+out_description.writerow(['Book Title','ISBN','Amazon URL','GoodReads Description','Wikipedia Description','Readgeek Description','Riffle Description'])
 
-list_ISBN = list(df.ISBN.values)
+# df_prices = pd.DataFrame(columns=['Book Title','ISBN','Book Image','Google Play','Barnes and Noble','Indie Bound'])
+
+out_prices = csv.writer(codecs.open("../data/image_and_prices.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
+out_prices.writerow(['Book Title','ISBN','Book Image','Google Play','Barnes and Noble','Indie Bound'])
+# ["Book Title","ISBN","Book Image","Google Play","Barnes and Noble","Indie Bound"]
+
 
 # To get book URLs from Riffle search results
 # We enter ISBN in search bar and select the first suggestion
 
 riffle_book_url = "rifflebooks.com"
 
-for index, row in df.iterrows():
-
-    ISBN = row['ISBN']
-    title = row['Book Title']
+# for index, row in df.iterrows():
+for item in r:
+    ISBN = item[0]
+    title = item[1]
 
     input_search_ISNB = browser.find_element_by_xpath('//*[@id="navSearchField"]')
     input_search_ISNB.send_keys(ISBN)
@@ -107,10 +117,11 @@ for index, row in df.iterrows():
 
     if browser.current_url == riffle_book_url:
         price_google, price_barnes, price_indie, book_image_url = 'NaN','NaN','NaN','NaN'
-        df_prices = df_prices.append(
-            {'Book Title': title, 'ISBN': ISBN, 'Book Image': book_image_url,
-             'Google Play': price_google, 'Barnes and Noble': price_barnes, 'Indie Bound': price_indie},
-            ignore_index=True)
+        # df_prices = df_prices.append(
+        #     {'Book Title': title, 'ISBN': ISBN, 'Book Image': book_image_url,
+        #      'Google Play': price_google, 'Barnes and Noble': price_barnes, 'Indie Bound': price_indie},
+        #     ignore_index=True)
+        out_prices.writerow([title,ISBN,book_image_url,price_google,price_barnes,price_indie])
         continue
 
     else:
@@ -136,21 +147,24 @@ for index, row in df.iterrows():
     riffle_book_description = ''.join(riffle_book_descr).strip()
 
     # df.set_value(index, 'Riffle Description', riffle_book_description)
-    df.at[index, 'Riffle Description'] = riffle_book_description
+    # df.at[index, 'Riffle Description'] = riffle_book_description
 
     try:
         price_google = get_price_google_play(google_play_url)
     except:
+        price_google = 'NaN'
         print("Price not found on Google Play Books")
 
     try:
         price_barnes = get_price_barnes_and_noble(barnes_and_noble_url)
     except:
+        price_barnes = 'NaN'
         print("Price not found on Barnes and Noble")
 
     try:
         price_indie = get_price_indie_bound(indie_bound_url)
     except:
+        price_indie = 'NaN'
         print("Price not found on Indie Bound")
 
     print(ISBN)
@@ -160,11 +174,13 @@ for index, row in df.iterrows():
     print(riffle_book_description)
     print(price_google, price_barnes, price_indie)
 
-    df_prices = df_prices.append({'Book Title': title, 'ISBN': ISBN, 'Book Image': book_image_url, 'Google Play': price_google, 'Barnes and Noble': price_barnes, 'Indie Bound': price_indie}, ignore_index=True)
+    # df_prices = df_prices.append({'Book Title': title, 'ISBN': ISBN, 'Book Image': book_image_url, 'Google Play': price_google, 'Barnes and Noble': price_barnes, 'Indie Bound': price_indie}, ignore_index=True)
+    out_prices.writerow([title, ISBN, book_image_url, price_google, price_barnes, price_indie])
+    item.append(riffle_book_description)
+    out_description.writerow(item)
+# df.to_csv('../data/description_goodreads_riffle.csv')
 
-df.to_csv('../data/description_goodreads_riffle.csv')
-
-df_prices.to_csv('../data/image_and_prices.csv')
+# df_prices.to_csv('../data/image_and_prices.csv')
 
 # df_prices contains Book Title, ISBN, Book Image, Google Play, Barnes and Noble, Indie Bound
 
