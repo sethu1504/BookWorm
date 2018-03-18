@@ -6,18 +6,35 @@ import codecs
 from url_constants import *
 
 
-def get_book_details(book_page_url, book_title):
+def get_user_and_review_stack(tree):
+    book_reviews = tree.xpath("//div[@id='bookReviews']")[0]
+
+    user_stack = book_reviews.xpath("//div[@class='reviewHeader uitext stacked']")
+    all_reviews = book_reviews.xpath("//div[@class='reviewText stacked']")
+
+    return user_stack, all_reviews
+
+
+def get_book_details(book_page_url, book_title, rev_out):
     book_page_req = requests.get(book_page_url)
 
     tree_book = lxml.html.fromstring(book_page_req.content)
-    author = tree_book.xpath("//a[@class='authorName']")[0].xpath("./span")[0].text_content().rstrip()
-    pages = tree_book.xpath("//span[@itemprop='numberOfPages']")[0].text_content().rstrip().split(" ")[0]
-    publish_details_string = tree_book.xpath("//div[@class='row']")[1].text_content().strip()
-    publish_details_list = publish_details_string.split("\n")
-    publish_date = publish_details_list[1].strip()
+    author = tree_book.xpath("//a[@class='authorName']")
+    if len(author) > 0:
+        author = author[0].xpath("./span")[0].text_content().rstrip()
+    pages = tree_book.xpath("//span[@itemprop='numberOfPages']")
+    if len(pages) > 0:
+        pages = pages[0].text_content().rstrip().split(" ")[0]
+
+    publish_date = ""
     publication = ""
-    if "by" in publish_details_string:
-        publication = publish_details_list[2].strip().split("by")[1].strip()
+    publish_details_string = tree_book.xpath("//div[@class='row']")
+    if len(publish_details_string) > 1:
+        publish_details_string = publish_details_string[1].text_content().strip()
+        publish_details_list = publish_details_string.split("\n")
+        publish_date = publish_details_list[1].strip()
+        if "by" in publish_details_string:
+            publication = publish_details_list[2].strip().split("by")[1].strip()
 
     info_titles = tree_book.xpath("//div[@class='infoBoxRowTitle']")
     det_index = -1
@@ -52,10 +69,41 @@ def get_book_details(book_page_url, book_title):
     for genre in genre_divs:
         genre_list.append(genre.text_content().strip())
 
-    desc_div = tree_book.xpath("//div[@id='description']")[0]
-    description = desc_div.xpath("./span")[-1].text_content().rstrip()
+    desc_div = tree_book.xpath("//div[@id='description']")
+    description = ""
+    if len(desc_div) > 0:
+        desc_div = desc_div[0]
+        description = desc_div.xpath("./span")[-1].text_content().rstrip()
 
-    return [book_title, isbn, author, language, pages, publication, publish_date, genre_list, book_page_url], \
+    rating = tree_book.xpath("//span[@class='average']")
+    if len(rating) > 0:
+        rating = rating[0].text.strip()
+
+    all_users_ratings, all_reviews_stack = get_user_and_review_stack(tree_book)
+    for user_rating, review_stack in zip(all_users_ratings, all_reviews_stack):
+        review = review_stack.xpath("./span")[0].xpath("./span")[-1].text_content().rstrip()
+        review_date = user_rating.xpath("./a")[0].text_content().rstrip()
+
+        user_spans = user_rating.xpath("./span")
+
+        user_url = user_spans[0].xpath("./a/@href")[0]
+        user_id = user_url.split("/")[-1].split("-")[0]
+        abs_user_url = good_reads_home_url + user_url
+        user_name = user_spans[0].xpath("./a")[0].text_content().rstrip()
+
+        rating = -1
+        if len(user_spans) > 1:
+            stars = user_spans[1].xpath("./span")
+            rating = 0
+            for star in stars:
+                star_class = star.get("class")
+                if star_class == "staticStar p10":
+                    rating += 1
+                else:
+                    break
+        rev_out.writerow([book_title, isbn, user_id, user_name, abs_user_url, review, review_date, rating])
+
+    return [book_title, isbn, rating, author, language, pages, publication, publish_date, genre_list, book_page_url], \
            [book_title, isbn, amazon_url, description]
 
 
@@ -65,7 +113,7 @@ def scrape_book_details(isbn, book_title):
 
     out = csv.writer(codecs.open("../data/books.csv", "a", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
     out_desc = csv.writer(codecs.open("../data/description.csv", "a", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
-    out.writerow(["Book Title", "ISBN", "Author", "Language", "Pages", "Publication", "Publish Date",
+    out.writerow(["Book Title", "ISBN", "Rating", "Author", "Language", "Pages", "Publication", "Publish Date",
                   "Genres", "Book URL"])
     out_desc.writerow(["Book Title", "ISBN", "GoodReads Description", "Amazon URL"])
 
@@ -76,18 +124,23 @@ def scrape_book_details(isbn, book_title):
 
 
 def scrape_best_books_goodreads():
-    out = csv.writer(codecs.open("../data/books.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
-    out_desc = csv.writer(codecs.open("../data/description.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
-    out.writerow(["Book Title", "ISBN", "Author", "Language", "Pages", "Publication", "Publish Date",
+    out = csv.writer(codecs.open("../data/batch_2/books.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
+    out_desc = csv.writer(codecs.open("../data/batch_2/description.csv", "w", "utf-8"), delimiter=",",
+                          quoting=csv.QUOTE_ALL)
+    out_review = csv.writer(codecs.open("../data/batch_2/reviews_users.csv", "w", "utf-8"), delimiter=",",
+                            quoting=csv.QUOTE_ALL)
+    out.writerow(["Book Title", "ISBN", "Rating", "Author", "Language", "Pages", "Publication", "Publish Date",
                   "Genres", "Book URL"])
     out_desc.writerow(["Book Title", "ISBN", "Amazon URL", "GoodReads Description"])
-
-    no_of_books_in_each_decade = 200
-    num_pages = int(no_of_books_in_each_decade / 100)
+    out_review.writerow(["Book Title", "ISBN", "User ID", "User Name", "User URL", "Review", "Review Date", "Rating"])
 
     for i in range(0, len(best_books_url_list)):
+        book_id = 1
         next_url = best_books_url_list[i]
-        for j in range(0, num_pages):
+        r = requests.get(next_url)
+        tree = lxml.html.fromstring(r.content)
+        num_pages = int(tree.xpath("//div[@class='pagination']")[0].xpath("./a")[-2].text_content().strip())
+        for j in range(1, num_pages + 1):
             print(next_url)
             r = requests.get(next_url)
             tree = lxml.html.fromstring(r.content)
@@ -97,17 +150,18 @@ def scrape_best_books_goodreads():
                 table_datum = book.xpath("./td")
                 details = table_datum[2]
                 book_title = details.xpath("./a")[0].xpath("./span")[0].text_content().rstrip()
-                print(book_title)
+                print(str(book_id) + " " + book_title)
                 book_page_url = good_reads_home_url + details.xpath("./a/@href")[0]
 
-                book_details = get_book_details(book_page_url, book_title)
+                book_details = get_book_details(book_page_url, book_title, out_review)
 
                 out.writerow(book_details[0])
                 out_desc.writerow(book_details[1])
+                book_id += 1
 
             scheme, netloc, path, query_string, fragment = urlsplit(next_url)
             query_params = parse_qs(query_string)
-            query_params["page"] = str(j+2)
+            query_params["page"] = str(j+1)
             new_query_string = urlencode(query_params, doseq=True)
             next_url = urlunsplit((scheme, netloc, path, new_query_string, fragment))
 

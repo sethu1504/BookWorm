@@ -42,7 +42,12 @@ for genre in genre_list:
             if len(desc_div) > 0:
                 description = desc_div[0].xpath("./span")[-1].text_content().rstrip()
 
+            author = tree_book.xpath("//a[@class='authorName']")
+            if len(author) > 0:
+                author = author[0].xpath("./span")[0].text_content().rstrip()
+
             clean_desc_words = give_clean_words_list(description)
+            clean_desc_words = clean_desc_words + author.split(" ")
 
             for word in clean_desc_words:
                 text_file.write(word + "\n")
