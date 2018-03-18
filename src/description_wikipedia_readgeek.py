@@ -5,121 +5,127 @@ from selenium import webdriver
 import time
 from fuzzywuzzy import fuzz
 from url_constants import *
+import csv
+import codecs
+import re
 
 
-def wiki_description_crawler(book_titles):
-    browser = webdriver.Firefox(executable_path='/Users/reet/Libraries/geckodriver')
-    browser.get(google_url)
-    timeout = 2
-    #url_list = []
-    wiki_descriptions_list = []
-    for i in book_titles:
-        # go to Google and simulate browser actions to search for titles of books
-        # in case no wikipedia page, wrapping in try and except blocks
-        try:
-            # remove series content and brackets
-            i = i.split("(", 1)[0]
-            browser.get(google_url)
+def wiki_description_crawler(browser, title, timeout):
+    try:
+        print(title)
+        candidate_description_list = []
+        browser.get(google_url)
 
-            query = 'wikipedia novel ' + i
-            inputElement = browser.find_element_by_name('q')
-            inputElement.send_keys(query)
-            inputElement.submit()
-            time.sleep(timeout)
+        wiki_description = ''
+        # removing series content and brackets
+        title = (title.split("(", 1)[0]).strip()
+        browser.get(google_url)
 
-            url = browser.find_element_by_xpath("//div[@class='rc']//a[contains(text(), 'Wikipedia')]") \
-                .get_attribute("href")
+        query = 'wikipedia novel ' + title
+        inputElement = browser.find_element_by_name('q')
+        inputElement.send_keys(query)
+        inputElement.submit()
+        time.sleep(timeout)
 
-            if (url is None or url == ""):
-                #url_list.append("")
-                wiki_descriptions_list.append("")
-                continue
-            #url_list.append(url)
+        urls = browser.find_elements_by_xpath("//div[@class='rc']//a[contains(text(), 'Wikipedia')]")
+        #selecting top 2 Wikipedia results
 
-            # get content from wiki page
+        urls = urls[:2]
+        for elem in urls:
+            url = elem.get_attribute("href")
+
+            # get the page content from the fetched wikipedia page
             wiki_page = requests.get(url)
             tree = lh.fromstring(wiki_page.content)
-            title = tree.xpath('//h1[@id="firstHeading"]//text()')[0]
 
-            #if the wikipedia page is for a movie instead
-            if ('film' in title):
-                wiki_descriptions_list.append('')
+            #fetch wikipedia page's title and compare it with the book title
+            wikipage_title = " ".join(tree.xpath('//h1[@id="firstHeading"]//text()')) #list is obtained
+            wikipage_title = re.sub(' +', ' ', wikipage_title)
+
+            #in case it is a movie, don't consider it
+            if ('film' in wikipage_title):
                 continue
 
-            match = fuzz.ratio(title, i)
+            #for fuzzymatching giving perfect result, remove keywords (novel) which hampers result
+            wikipage_title = (re.sub(r'\(novel\)', '', wikipage_title)).strip()
+
+            #fuzzyword matching. If the titles match more than 50%, consider them
+            match = fuzz.ratio(wikipage_title, title)
             if (match >= 50):
-                description = ''.join(tree.xpath("//div[@class='mw-parser-output']/p[1]//text()"))
+                wiki_description = ''.join(tree.xpath("//div[@class='mw-parser-output']/p[1]//text()"))
+                candidate_description_list.append((wiki_description, match, url))
+
+        #of the obtained 2, choose the one which matches the most
+        if (len(candidate_description_list) > 1):
+            #if both match-counts are equal (tied), then the first match is most probable. Choose that
+            if(candidate_description_list[0][1]==candidate_description_list[1][1]):
+                wiki_description = candidate_description_list[0][0]
             else:
-                description = ''
-        except:
-            description = ''
-        wiki_descriptions_list.append(description)
-        print(i, title)
-    return wiki_descriptions_list
+                candidate_description_list = sorted(candidate_description_list, key=lambda x: x[1])
+                wiki_description = candidate_description_list[-1][0]
+                #print(candidate_description_list[-1][1], candidate_description_list[-1][2])
+        else:
+            wiki_description = candidate_description_list[0][0]
+            #print(candidate_description_list[-1][1], candidate_description_list[-1][2])
+        #print(wiki_description)
+        return (wiki_description)
+    except:
+        return ''
 
 
-def amazon_description_crawler(amazon_urls):
-    pass
+def readgeek_description_crawler(isbn):
+    try:
+        print(isbn)
+        if (isbn == '-1'):
+            return ''
 
-def readgeek_description_crawler(isbns):
-    geek_descriptions_list = []
-    for i in isbns:
-        if (i == "-1"):
-            geek_descriptions_list.append("")
-            continue
         # generate query for readgeek in the format specified
-        readgeek_query_url = readgeek_url + i
+        readgeek_query_url = readgeek_url + isbn
 
         # geek_page_url is the first search result
         geek_query_result = requests.get(readgeek_query_url)
         tree1 = lh.fromstring(geek_query_result.content)
-        description = ''
-        try:
-            temp_url = tree1.xpath("//*[@id='searchresults']/div[1]/div[1]/div/a/@href")
-            if (temp_url is None):
-                geek_descriptions_list.append("")
-                continue
 
-            temp_geek_url = tree1.xpath("//*[@id='searchresults']/div[1]/div[1]/div/a/@href")
-            if ((temp_geek_url is None) or (not temp_geek_url)):  # if list is empty
-                geek_descriptions_list.append("")
-                continue
+        temp_url = tree1.xpath("//*[@id='searchresults']/div[1]/div[1]/div/a/@href")
+        if (temp_url is None):
+            return ''
 
-            geek_page_url = 'https://www.readgeek.com' + temp_geek_url[0]
-            if (geek_page_url is None or geek_page_url == ""):
-                geek_descriptions_list.append("")
-                continue
+        temp_geek_url = tree1.xpath("//*[@id='searchresults']/div[1]/div[1]/div/a/@href")
+        if ((temp_geek_url is None) or (not temp_geek_url)):  # if list is empty
+            return ''
 
-            # geek_page is the actual page of the book. Fetch description from it
-            geek_page = requests.get(geek_page_url)
-            tree2 = lh.fromstring(geek_page.content)
-            description = ''.join(tree2.xpath("//*[@id='blurb']//text()")[1:])
-        except:
-            description = ''
-        print(i)
-        geek_descriptions_list.append(description)
+        geek_page_url = 'https://www.readgeek.com' + temp_geek_url[0]
+        if (geek_page_url is None or geek_page_url == ""):
+            return ''
 
-    return geek_descriptions_list
+        # geek_page is the actual page of the book. Fetch description from it
+        geek_page = requests.get(geek_page_url)
+        tree2 = lh.fromstring(geek_page.content)
+        geek_description = ''.join(tree2.xpath("//*[@id='blurb']//text()")[1:])
+        return geek_description
+    except:
+        return ''
 
 
-# '/Users/reet/PycharmProjects/BookWorm/data/books.csv')
-main_desc_df = pd.read_csv('../data/description.csv', encoding='utf-8')
-isbn_list = main_desc_df['ISBN'].tolist()
-book_titles_list = main_desc_df['Book Title'].tolist()
+description_input_file = open('../data/description.csv')
+reader = csv.reader(description_input_file)
+out_description = csv.writer(codecs.open("../data/description_wikipedia_readgeek.csv", "w", "utf-8"), delimiter=",",
+                             quoting=csv.QUOTE_ALL)
+out_description.writerow(
+    ['Book Title', 'ISBN', 'Amazon URL', 'GoodReads Description', 'Wikipedia Description', 'Readgeek Description'])
 
-print("---------Wikipedia---------")
-wiki_descrs = wiki_description_crawler(book_titles_list)
-print("---------ReadGeek----------")
-readgeek_descrs = readgeek_description_crawler(isbn_list)
+# skip header
+next(reader, None)
+selenium_timeout = 1
 
-wiki_df = pd.DataFrame(wiki_descrs, columns=['wikipedia'])
-readgeek_df = pd.DataFrame(readgeek_descrs, columns=['readgeek'])
+# browser is the context to run selenium code for wikipedia
+browser = webdriver.Firefox(executable_path='/Users/reet/Libraries/geckodriver')
 
-wiki_df = wiki_df.loc[~wiki_df.index.duplicated(keep='first')]
-readgeek_df = readgeek_df.loc[~readgeek_df.index.duplicated(keep='first')]
-
-main_desc_df = main_desc_df.loc[~main_desc_df.index.duplicated(keep='first')]
-main_desc_df = pd.concat([main_desc_df, wiki_df, readgeek_df], axis=1)
-
-main_desc_df.to_csv('../data/description_wikipedia_readgeek.csv', encoding='utf-8', index=False)
-# remove Book, Description, name of the book
+for item in reader:
+    title = item[0]
+    isbn = item[1]
+    amazon_url = item[2]
+    good_descr = item[3]
+    wiki_descr = wiki_description_crawler(browser, title, selenium_timeout)
+    readgeek_descr = readgeek_description_crawler(isbn)
+    out_description.writerow([title, isbn, amazon_url, good_descr, wiki_descr, readgeek_descr])
