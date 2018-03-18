@@ -1,14 +1,12 @@
 import requests
-import pandas as pd
 import lxml.html as lh
 from selenium import webdriver
-import time
 from fuzzywuzzy import fuzz
 from url_constants import *
-import csv
 import codecs
+import csv
+import time
 import re
-
 
 def wiki_description_crawler(browser, title, timeout):
     try:
@@ -43,7 +41,7 @@ def wiki_description_crawler(browser, title, timeout):
             wikipage_title = re.sub(' +', ' ', wikipage_title)
 
             #in case it is a movie, don't consider it
-            if ('film' in wikipage_title):
+            if ('film' in wikipage_title.lower()):
                 continue
 
             #for fuzzymatching giving perfect result, remove keywords (novel) which hampers result
@@ -68,6 +66,12 @@ def wiki_description_crawler(browser, title, timeout):
             wiki_description = candidate_description_list[0][0]
             #print(candidate_description_list[-1][1], candidate_description_list[-1][2])
         #print(wiki_description)
+
+        #some pages don't lead to the right page but to the 'may refer to' page. In that case, ignore
+        #the description. The length of such description is very less and contain the keywords 'may refer to'
+        #example, Awakening or The Awakening may refer to:
+        if ('may refer to' in wiki_description and len(wiki_description.split()) <= 2 * len(title.split()) + 10):
+            wiki_description = ''
         return (wiki_description)
     except:
         return ''
@@ -107,9 +111,9 @@ def readgeek_description_crawler(isbn):
         return ''
 
 
-description_input_file = open('../data/description.csv')
+description_input_file = open('../data/batch_1/description.csv')
 reader = csv.reader(description_input_file)
-out_description = csv.writer(codecs.open("../data/description_wikipedia_readgeek.csv", "w", "utf-8"), delimiter=",",
+out_description = csv.writer(codecs.open("../data/batch_1/description_wikipedia_readgeek.csv", "w", "utf-8"), delimiter=",",
                              quoting=csv.QUOTE_ALL)
 out_description.writerow(
     ['Book Title', 'ISBN', 'Amazon URL', 'GoodReads Description', 'Wikipedia Description', 'Readgeek Description'])
