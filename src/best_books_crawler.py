@@ -34,7 +34,10 @@ def get_book_details(book_page_url, book_title, rev_out):
         publish_details_list = publish_details_string.split("\n")
         publish_date = publish_details_list[1].strip()
         if "by" in publish_details_string:
-            publication = publish_details_list[2].strip().split("by")[1].strip()
+            try:
+                publication = publish_details_list[2].strip().split("by")[1].strip()
+            except IndexError:
+                publication = ""
 
     info_titles = tree_book.xpath("//div[@class='infoBoxRowTitle']")
     det_index = -1
@@ -75,35 +78,39 @@ def get_book_details(book_page_url, book_title, rev_out):
         desc_div = desc_div[0]
         description = desc_div.xpath("./span")[-1].text_content().rstrip()
 
-    rating = tree_book.xpath("//span[@class='average']")
-    if len(rating) > 0:
-        rating = rating[0].text.strip()
+    avg_rating = tree_book.xpath("//span[@class='average']")
+    if len(avg_rating) > 0:
+        avg_rating = avg_rating[0].text.strip()
 
     all_users_ratings, all_reviews_stack = get_user_and_review_stack(tree_book)
     for user_rating, review_stack in zip(all_users_ratings, all_reviews_stack):
-        review = review_stack.xpath("./span")[0].xpath("./span")[-1].text_content().rstrip()
-        review_date = user_rating.xpath("./a")[0].text_content().rstrip()
+        try:
+            review = review_stack.xpath("./span")[0].xpath("./span")[-1].text_content().rstrip()
+            review_date = user_rating.xpath("./a")[0].text_content().rstrip()
 
-        user_spans = user_rating.xpath("./span")
+            user_spans = user_rating.xpath("./span")
 
-        user_url = user_spans[0].xpath("./a/@href")[0]
-        user_id = user_url.split("/")[-1].split("-")[0]
-        abs_user_url = good_reads_home_url + user_url
-        user_name = user_spans[0].xpath("./a")[0].text_content().rstrip()
+            user_url = user_spans[0].xpath("./a/@href")[0]
+            user_id = user_url.split("/")[-1].split("-")[0]
+            abs_user_url = good_reads_home_url + user_url
+            user_name = user_spans[0].xpath("./a")[0].text_content().rstrip()
 
-        rating = -1
-        if len(user_spans) > 1:
-            stars = user_spans[1].xpath("./span")
-            rating = 0
-            for star in stars:
-                star_class = star.get("class")
-                if star_class == "staticStar p10":
-                    rating += 1
-                else:
-                    break
-        rev_out.writerow([book_title, isbn, user_id, user_name, abs_user_url, review, review_date, rating])
+            rating = -1
+            if len(user_spans) > 1:
+                stars = user_spans[1].xpath("./span")
+                rating = 0
+                for star in stars:
+                    star_class = star.get("class")
+                    if star_class == "staticStar p10":
+                        rating += 1
+                    else:
+                        break
+            rev_out.writerow([book_title, isbn, user_id, user_name, abs_user_url, review, review_date, rating])
 
-    return [book_title, isbn, rating, author, language, pages, publication, publish_date, genre_list, book_page_url], \
+        except IndexError:
+            continue
+
+    return [book_title, isbn, avg_rating, author, language, pages, publication, publish_date, genre_list, book_page_url], \
            [book_title, isbn, amazon_url, description]
 
 
@@ -124,10 +131,10 @@ def scrape_book_details(isbn, book_title):
 
 
 def scrape_best_books_goodreads():
-    out = csv.writer(codecs.open("../data/batch_2/books.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
-    out_desc = csv.writer(codecs.open("../data/batch_2/description.csv", "w", "utf-8"), delimiter=",",
+    out = csv.writer(codecs.open("../data/batch_3/books.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
+    out_desc = csv.writer(codecs.open("../data/batch_3/description.csv", "w", "utf-8"), delimiter=",",
                           quoting=csv.QUOTE_ALL)
-    out_review = csv.writer(codecs.open("../data/batch_2/reviews_users.csv", "w", "utf-8"), delimiter=",",
+    out_review = csv.writer(codecs.open("../data/batch_3/reviews_users.csv", "w", "utf-8"), delimiter=",",
                             quoting=csv.QUOTE_ALL)
     out.writerow(["Book Title", "ISBN", "Rating", "Author", "Language", "Pages", "Publication", "Publish Date",
                   "Genres", "Book URL"])
