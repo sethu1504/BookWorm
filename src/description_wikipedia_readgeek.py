@@ -55,17 +55,16 @@ def wiki_description_crawler(browser, title, timeout):
 
         #of the obtained 2, choose the one which matches the most
         if (len(candidate_description_list) > 1):
+
             #if both match-counts are equal (tied), then the first match is most probable. Choose that
             if(candidate_description_list[0][1]==candidate_description_list[1][1]):
                 wiki_description = candidate_description_list[0][0]
             else:
                 candidate_description_list = sorted(candidate_description_list, key=lambda x: x[1])
                 wiki_description = candidate_description_list[-1][0]
-                #print(candidate_description_list[-1][1], candidate_description_list[-1][2])
+
         else:
             wiki_description = candidate_description_list[0][0]
-            #print(candidate_description_list[-1][1], candidate_description_list[-1][2])
-        #print(wiki_description)
 
         #some pages don't lead to the right page but to the 'may refer to' page. In that case, ignore
         #the description. The length of such description is very less and contain the keywords 'may refer to'
