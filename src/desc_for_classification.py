@@ -6,7 +6,7 @@ from url_constants import *
 from clean_text import give_clean_words_list
 
 genre_list = ["crime", "fiction", "fantasy", "young-adult", "romance", "comedy", "dystopia",
-              "action", "historical", "non-fiction"]
+              "action", "historical", "non-fiction", "science fiction"]
 
 number_of_books_per_genre = 500
 iterations = int(number_of_books_per_genre / 20)

@@ -1,0 +1,5 @@
+## To convert Char field into the correct encoding format ##
+
+ALTER TABLE app_book CHANGE title title VARCHAR(1000) CHARACTER SET utf8 COLLATE utf8_general_ci;
+ALTER TABLE app_book CHANGE author author VARCHAR(500) CHARACTER SET utf8 COLLATE utf8_general_ci;
+ALTER TABLE app_book CHANGE publication publication VARCHAR(1000) CHARACTER SET utf8 COLLATE utf8_general_ci;

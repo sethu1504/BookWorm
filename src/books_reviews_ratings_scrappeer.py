@@ -71,5 +71,3 @@ for index, row in books_data.iterrows():
                 time.sleep(3)
         except NoSuchElementException:
             isNextPage = False
-
-
