@@ -1,0 +1,5 @@
+Take the following steps to populate MySQL and MongoDB with data
+
+1. Run load_books.py - Populates books general details to the mysql database
+
+2. Run load_books_secondary.py - Based on the unique ids from mysql, populates mongodb with description of each book in a new collection (description)

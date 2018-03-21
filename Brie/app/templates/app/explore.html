@@ -51,7 +51,10 @@
        success:function(data, textStatus, jqXHR){
        	   $("#BookTitles").empty()
        	   for(var i = 0; i < data.length; i++){
-       	   		$("#BookTitles").append(data[i]["fields"].title)
+              var title = data[i]["fields"].title
+              var id = data[i].pk
+              $('<a id = "' + id + '" href="../book/' + id + '">').html(title).appendTo("#BookTitles")
+              $('<br>').html(title).appendTo("#BookTitles")
        	   }
        }
    });

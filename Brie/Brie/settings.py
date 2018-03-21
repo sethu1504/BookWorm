@@ -84,7 +84,7 @@ WSGI_APPLICATION = 'Brie.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'Book',
+        'NAME': 'Brie',
         'USER': 'root',
         'PASSWORD': 'sethu123',
         'HOST': 'localhost',   # Or an IP Address that your DB is hosted on

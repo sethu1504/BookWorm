@@ -21,14 +21,18 @@ def search_book(request):
     return render(request, 'app/explore.html')
 
 
-def create(request):
+def search_result(request):
     print("In here")
     if request.method == "POST":
         query = request.POST["query"]
         print("Search = " + query)
-        data = Book.objects.filter(title__contains=query)
+        data = Book.objects.filter(title__icontains=query)
         print(data)
         data = serializers.serialize('json', data)
         return HttpResponse(data, content_type="application/json")
     else:
-        return HttpResponse('Get')
+        return HttpResponse('Invalid Request!!')
+
+
+def book_view(request, book_id):
+    return render(request, 'app/book_view.html')
