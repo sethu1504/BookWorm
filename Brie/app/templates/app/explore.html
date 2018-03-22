@@ -22,8 +22,20 @@
 	<body>
 
         <form id="search_book" method="post">
-        	<input type="text" name="search_tite" id="search_query">
-            <input type=submit value="submit">{% csrf_token %}
+        <div class="container">
+        <div class="row">
+        <div id="custom-search-input">{% csrf_token %}
+          <div class="input-group col-md-12">
+            <input type="text" class="  search-query form-control" placeholder="Search Books" id="search_query"/>
+            <span class="input-group-btn">
+              <button class="btn btn-danger" type="submit">
+                <span class=" glyphicon glyphicon-search"></span>
+              </button>
+            </span>
+          </div>
+        </div>
+  </div>
+</div>
         </form>
 
         <div id="BookTitles">
@@ -53,7 +65,7 @@
        	   for(var i = 0; i < data.length; i++){
               var title = data[i]["fields"].title
               var id = data[i].pk
-              $('<a id = "' + id + '" href="../book/' + id + '">').html(title).appendTo("#BookTitles")
+              $('<a id = "' + id + '" href="../book/' + id + '" target="_blank">').html(title).appendTo("#BookTitles")
               $('<br>').html(title).appendTo("#BookTitles")
        	   }
        }

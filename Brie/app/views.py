@@ -25,9 +25,7 @@ def search_result(request):
     print("In here")
     if request.method == "POST":
         query = request.POST["query"]
-        print("Search = " + query)
         data = Book.objects.filter(title__icontains=query)
-        print(data)
         data = serializers.serialize('json', data)
         return HttpResponse(data, content_type="application/json")
     else:
@@ -35,4 +33,10 @@ def search_result(request):
 
 
 def book_view(request, book_id):
-    return render(request, 'app/book_view.html')
+    book = Book.objects.filter(id=book_id)[0]
+    context = dict()
+    context["title"] = book.title
+    context["author"] = book.author
+    context["pages"] = book.pages
+    context["publication"] = book.publication
+    return render(request, 'app/book_view.html', context)
