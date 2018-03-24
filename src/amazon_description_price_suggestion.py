@@ -1,15 +1,11 @@
-import pandas as pd
 import requests
 import lxml.html
 import time
 import re
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoSuchElementException
-from urllib.parse import urlencode, parse_qs, urlsplit, urlunsplit
 import csv
 import codecs
-import numpy as np
+
 
 def get_amazon_price(amazon_url, selenium_instance):
 
@@ -68,7 +64,7 @@ def get_amazon_price(amazon_url, selenium_instance):
         except:
             return 'NaN'
 
-def get_amazon_suggestions(amazon_url, number_of_recommendations, selenium_instance):
+def get_amazon_recommendation(amazon_url, number_of_recommendations, selenium_instance):
 
     if not selenium_instance:
         browser.get(amazon_url)
@@ -95,26 +91,40 @@ def get_amazon_description(amazon_url, selenium_instance):
     if not selenium_instance:
         browser.get(amazon_url)
 
-    browser.switch_to.frame(browser.find_element_by_css_selector("#bookDesc_iframe"))  # To switch to iframe
+    try:
+        browser.switch_to.frame(browser.find_element_by_css_selector("#bookDesc_iframe"))  # To switch to iframe
+        amazon_description = browser.find_element_by_xpath('//*[@id="iframeContent"]').text
+        return amazon_description
 
-    amazon_description = browser.find_element_by_xpath('//*[@id="iframeContent"]').text
-
-    return amazon_description
-
+    except:
+        return ''
 
 browser = webdriver.Firefox(executable_path='/home/ldua/geckodriver')
-df = pd.read_csv('../data/description.csv')
+
+# df_description = pd.read_csv('../data/description_wikipedia_readgeek_riffle.csv')
+# df_description['Amazon Description'] = ""
+
+file_description = open('../data/batch_1/description_wikipedia_readgeek_riffle.csv')
+read_description = csv.reader(file_description)
+next(read_description, None)
+
+out_description = csv.writer(codecs.open("../data/batch_1/description_all.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
+out_description.writerow(['Book Title','ISBN','Amazon URL','GoodReads Description','Wikipedia Description','Readgeek Description','Riffle Description','Amazon Description'])
+
 # df_prices = pd.read_csv('../data/image_and_prices.csv')
+# df_prices['Amazon'] = ""
 # df_description = pd.read_csv('../data/desc.csv')
 
-out = csv.writer(codecs.open("../data/recommendation.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
-out.writerow(['Book Title','ISBN','R1 Title','R1 URL','R2 Title','R2 URL','R3 Title','R3 URL','R4 Title','R4 URL','R5 Title','R5 URL'])
+out_recommendation = csv.writer(codecs.open("../data/batch_1/recommendation.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
+out_recommendation.writerow(['Book Title','Book ISBN','Book URL','Amazon Price','R1 Title','R1 URL','R2 Title','R2 URL','R3 Title','R3 URL','R4 Title','R4 URL','R5 Title','R5 URL'])
 
-for index, row in df.iterrows():
+list_amazon_list = list()
 
-    # good_reads_amazon_url = 'https://www.amazon.com/gp/product/B073TJBYTB/ref=amb_link_3?pf_rd_m=ATVPDKIKX0DER&pf_rd_s=hero-quick-promo&pf_rd_r=NZMCWJV8Q91PG0F29997&pf_rd_r=NZMCWJV8Q91PG0F29997&pf_rd_t=201&pf_rd_p=1aeb5983-d340-458e-a130-2b54e81d5b71&pf_rd_p=1aeb5983-d340-458e-a130-2b54e81d5b71&pf_rd_i=B019E9WCKI'
+for row in read_description:
 
-    good_reads_amazon_url = row['Amazon URL']
+# good_reads_amazon_url = 'https://www.goodreads.com/buy_buttons/12/follow?book_id=4588&ref=x_gr_w_bb&tag=x_gr_w_bb-20'
+
+    good_reads_amazon_url = row[2] #row['Amazon URL']
 
     # To handle amazon.in / amazon.ca / amazon.co.uk / amazon.fr links
 
@@ -125,33 +135,45 @@ for index, row in df.iterrows():
         if 'amazon.in' in amazon_url:
             amazon_url = amazon_url.replace('amazon.in', 'amazon.com')
             browser.get(amazon_url)
+            time.sleep(2)
 
         elif 'amazon.ca' in amazon_url:
             amazon_url = amazon_url.replace('amazon.ca', 'amazon.com')
             browser.get(amazon_url)
+            time.sleep(2)
 
         elif 'amazon.co.uk' in amazon_url:
             amazon_url = amazon_url.replace('amazon.co.uk', 'amazon.com')
             browser.get(amazon_url)
+            time.sleep(2)
 
         elif 'amazon.fr' in amazon_url:
             amazon_url = amazon_url.replace('amazon.fr', 'amazon.com')
             browser.get(amazon_url)
+            time.sleep(2)
+
+        elif 'amazon.de' in amazon_url:
+            amazon_url = amazon_url.replace('amazon.de', 'amazon.com')
+            browser.get(amazon_url)
+            time.sleep(2)
 
     time.sleep(2)
-    # amazon_price = get_amazon_price(amazon_url, True)
-    r_list = get_amazon_suggestions(amazon_url, 5, True) #recommendation list
-    # amazon_description = get_amazon_description(amazon_url, True)
+
+    amazon_price = get_amazon_price(amazon_url, True)
+    r_list = get_amazon_recommendation(amazon_url, 5, True) #recommendation list
+    amazon_description = get_amazon_description(amazon_url, True)
 
     # print(amazon_price)
-    # for i in suggestion_dict.value():
-    #     print(i)
     # print(amazon_description)
-    r_list.insert(0, row['ISBN'])
-    r_list.insert(0, row['Book Title'])
-    out.writerow(r_list)
-#     df_prices.at[index, 'Amazon Price'] = amazon_price
-#     df_descriptions.at[index, 'Amazon Price'] = amazon_price
-#     out.writerow([row['Book Title'], row['ISBN'], r_list[0], r_list[1], r_list[0], r_list[1], r_list[0], r_list[], r_list[6], r_list[7], r_list[8], r_list[9]])
-# df_prices.to_csv('../data/image_and_prices.csv')
-# ,'R2 Title','R2 URL','R3 Title','R3 URL','R4 Title','R4 URL','R5 Title','R5 URL'
+    # for i in r_list:
+    #     print(i)
+
+    row.append(amazon_description)
+    out_description.writerow(row)
+
+
+    r_list.insert(0, amazon_price)
+    r_list.insert(0, row[2])#row['Amazon URL']
+    r_list.insert(0, row[1])#row['ISBN'])
+    r_list.insert(0, row[0])#row['Book Title'])
+    out_recommendation.writerow(r_list)
