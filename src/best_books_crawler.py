@@ -131,10 +131,10 @@ def scrape_book_details(isbn, book_title):
 
 
 def scrape_best_books_goodreads():
-    out = csv.writer(codecs.open("../data/batch_3/books.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
-    out_desc = csv.writer(codecs.open("../data/batch_3/description.csv", "w", "utf-8"), delimiter=",",
+    out = csv.writer(codecs.open("../data/batch_4/books.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
+    out_desc = csv.writer(codecs.open("../data/batch_4/description.csv", "w", "utf-8"), delimiter=",",
                           quoting=csv.QUOTE_ALL)
-    out_review = csv.writer(codecs.open("../data/batch_3/reviews_users.csv", "w", "utf-8"), delimiter=",",
+    out_review = csv.writer(codecs.open("../data/batch_4/reviews_users.csv", "w", "utf-8"), delimiter=",",
                             quoting=csv.QUOTE_ALL)
     out.writerow(["Book Title", "ISBN", "Rating", "Author", "Language", "Pages", "Publication", "Publish Date",
                   "Genres", "Book URL"])

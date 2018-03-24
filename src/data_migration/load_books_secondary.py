@@ -19,6 +19,7 @@ try:
         result = cursor.fetchall()
 
         books_desc = pd.read_csv("../../data/batch_1/description_wikipedia_readgeek.csv", encoding="ISO-8859-1")
+        books = pd.read_csv("../../data/batch_1/books.csv", encoding="ISO-8859-1")
         reviews_data = pd.read_csv("../../data/batch_1/reviews_users.csv", encoding="ISO-8859-1")
         reviews_index = -1
 
@@ -33,6 +34,7 @@ try:
             print(book_title)
 
             doc["title"] = book_title
+            doc["genre"] = books["Genres"][index]
 
             good_reads_desc = row["GoodReads Description"]
             if type(good_reads_desc) is float:
@@ -49,15 +51,15 @@ try:
                 read_geek_desc = ""
             doc["readgeek"] = give_clean_words_list(read_geek_desc)
 
-            riffle_desc = row["Riffle Description"]
-            if type(riffle_desc) is float:
-                riffle_desc = ""
-            doc["riffle"] = give_clean_words_list(riffle_desc)
-
-            amazon_desc = row["Amazon Description"]
-            if type(amazon_desc) is float:
-                amazon_desc = ""
-            doc["amazon"] = give_clean_words_list(amazon_desc)
+            # riffle_desc = row["Riffle Description"]
+            # if type(riffle_desc) is float:
+            #     riffle_desc = ""
+            # doc["riffle"] = give_clean_words_list(riffle_desc)
+            #
+            # amazon_desc = row["Amazon Description"]
+            # if type(amazon_desc) is float:
+            #     amazon_desc = ""
+            # doc["amazon"] = give_clean_words_list(amazon_desc)
 
             doc["amazon_url"] = row["Amazon URL"]
             doc["isbn"] = row["ISBN"]
