@@ -7,11 +7,11 @@ from selenium.webdriver.common.keys import Keys
 import csv
 import codecs
 
-file_description = open('../data/batch_3/description.csv')
+file_description = open('../data/batch_4/description.csv')
 read_description = csv.reader(file_description)
 next(read_description, None)
 
-out_description = csv.writer(codecs.open("../data/batch_3/description_2.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
+out_description = csv.writer(codecs.open("../data/batch_4/description_2.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
 out_description.writerow(['Book Title','ISBN','Amazon URL','GoodReads Description'])
 
 
@@ -22,6 +22,7 @@ for row in read_description:
     if ISBN == '-1':
         print(title)
         try:
+            print('try abe')
             search_url = 'https://www.abebooks.com/servlet/SearchResults?sts=t&tn='+title
             search = requests.get(search_url)
 
@@ -30,8 +31,6 @@ for row in read_description:
             book_name = tree.xpath('/html/body/div/div/div[3]/div[2]/div[2]/div[2]/div[1]/div[2]/div[1]/div[1]/p[2]/span[2]/a/text()')
             scrapped_ISBN = ''.join(book_name)
             print(scrapped_ISBN)
-
-            print('try abe')
             row[1] = scrapped_ISBN
 
             if row[1] == '-1' or row[1] == '':
