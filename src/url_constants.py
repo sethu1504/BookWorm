@@ -10,14 +10,22 @@ good_reads_explore_genre = "https://www.goodreads.com/search?&commit=Search&sear
 #                        "https://www.goodreads.com/list/show/18.Best_Books_of_the_Decade_1960_s"]
 
 
-best_books_url_list = ["https://www.goodreads.com/list/show/22.Best_Books_of_the_Decade_1950_s",
-                       "https://www.goodreads.com/list/show/23.Best_Books_of_the_Decade_1940_s",
-                       "https://www.goodreads.com/list/show/85.Best_Books_of_the_Decade_1930s",
-                       "https://www.goodreads.com/list/show/93.Best_Books_of_the_Decade_1910_s",
-                       "https://www.goodreads.com/list/show/38.Best_Books_of_the_Decade_1900_s",
-                       "https://www.goodreads.com/list/show/1386.Best_Books_of_the_Decade_1890s",
-                       "https://www.goodreads.com/list/show/2457.Best_Books_Of_The_Decade_1880s",
-                       "https://www.goodreads.com/list/show/2594.Best_Books_of_the_Decade_1870s"]
+# best_books_url_list = ["https://www.goodreads.com/list/show/22.Best_Books_of_the_Decade_1950_s",
+#                        "https://www.goodreads.com/list/show/23.Best_Books_of_the_Decade_1940_s",
+#                        "https://www.goodreads.com/list/show/85.Best_Books_of_the_Decade_1930s",
+#                        "https://www.goodreads.com/list/show/93.Best_Books_of_the_Decade_1910_s",
+#                        "https://www.goodreads.com/list/show/38.Best_Books_of_the_Decade_1900_s",
+#                        "https://www.goodreads.com/list/show/1386.Best_Books_of_the_Decade_1890s",
+#                        "https://www.goodreads.com/list/show/2457.Best_Books_Of_The_Decade_1880s",
+#                        "https://www.goodreads.com/list/show/2594.Best_Books_of_the_Decade_1870s"]
+
+best_books_url_list = ["https://www.goodreads.com/list/show/2458.Best_Books_Of_The_Decade_1860s",
+                       "https://www.goodreads.com/list/show/2592.Best_Books_of_the_Decade_1850s",
+                       "https://www.goodreads.com/list/show/2588.Best_Books_of_the_Decade_1840s",
+                       "https://www.goodreads.com/list/show/2591.Best_Books_of_the_Decade_1830s",
+                       "https://www.goodreads.com/list/show/2593.Best_Books_of_the_Decade_1820s",
+                       "https://www.goodreads.com/list/show/25498",
+                       "https://www.goodreads.com/list/show/4375"]
 
 
 # wiki_readgeek_description_crawler.py

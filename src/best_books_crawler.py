@@ -131,10 +131,10 @@ def scrape_book_details(isbn, book_title):
 
 
 def scrape_best_books_goodreads():
-    out = csv.writer(codecs.open("../data/batch_4/books.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
-    out_desc = csv.writer(codecs.open("../data/batch_4/description.csv", "w", "utf-8"), delimiter=",",
+    out = csv.writer(codecs.open("../data/batch_5/books.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
+    out_desc = csv.writer(codecs.open("../data/batch_5/description.csv", "w", "utf-8"), delimiter=",",
                           quoting=csv.QUOTE_ALL)
-    out_review = csv.writer(codecs.open("../data/batch_4/reviews_users.csv", "w", "utf-8"), delimiter=",",
+    out_review = csv.writer(codecs.open("../data/batch_5/reviews_users.csv", "w", "utf-8"), delimiter=",",
                             quoting=csv.QUOTE_ALL)
     out.writerow(["Book Title", "ISBN", "Rating", "Author", "Language", "Pages", "Publication", "Publish Date",
                   "Genres", "Book URL"])
@@ -146,7 +146,10 @@ def scrape_best_books_goodreads():
         next_url = best_books_url_list[i]
         r = requests.get(next_url)
         tree = lxml.html.fromstring(r.content)
-        num_pages = int(tree.xpath("//div[@class='pagination']")[0].xpath("./a")[-2].text_content().strip())
+        try:
+            num_pages = int(tree.xpath("//div[@class='pagination']")[0].xpath("./a")[-2].text_content().strip())
+        except IndexError:
+            num_pages = 1
         for j in range(1, num_pages + 1):
             print(next_url)
             r = requests.get(next_url)
