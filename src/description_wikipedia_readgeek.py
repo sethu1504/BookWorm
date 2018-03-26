@@ -16,12 +16,11 @@ def wiki_description_crawler(browser, title, timeout):
         candidate_description_list = []
         browser.get(google_url)
 
-        wiki_description = ''
         # removing series content and brackets and text after colon
-        title = re.sub("[\(\[].*?[\)\]]", "", title)
-        colon_index = title.find(':')
-        if colon_index != -1:
-            title = title[0:colon_index].strip()
+        # title = re.sub("[\(\[].*?[\)\]]", "", title)
+        # colon_index = title.find(':')
+        # if colon_index != -1:
+        #     title = title[0:colon_index].strip()
 
         browser.get(google_url)
 
@@ -37,7 +36,7 @@ def wiki_description_crawler(browser, title, timeout):
         urls = urls[:3]
         for elem in urls:
             url = elem.get_attribute("href")
-
+            #print(url, title)
             # get the page content from the fetched wikipedia page
             wiki_page = requests.get(url)
             tree = lh.fromstring(wiki_page.content)
@@ -57,10 +56,12 @@ def wiki_description_crawler(browser, title, timeout):
             #fuzzyword matching. If the titles match more than 50%, consider them
             title_punc_removed = re.sub('[' + string.punctuation + ']', '', title.lower())
             wikipage_title_punc_removed = re.sub('[' + string.punctuation + ']', '', wikipage_title.lower())
-            match = fuzz.ratio(wikipage_title_punc_removed, title_punc_removed)
+            match = fuzz.ratio(wikipage_title_punc_removed.lower(), title_punc_removed.lower())
+            #print(match,wikipage_title_punc_removed )
             if match >= 50:
                 wiki_description = ''.join(tree.xpath("//div[@class='mw-parser-output']/p[1]//text()"))
                 candidate_description_list.append((wiki_description, match, url))
+
 
         #of the obtained 2, choose the one which matches the most
         if len(candidate_description_list) > 1:
@@ -82,6 +83,8 @@ def wiki_description_crawler(browser, title, timeout):
             wiki_description = ''
         if len(wiki_description)>1:
             print(title)
+        else:
+            print(title, "not found")
         return (wiki_description)
     except:
         return ''
@@ -121,9 +124,9 @@ def readgeek_description_crawler(isbn):
         return ''
 
 
-description_input_file = open('../data/batch_1/description.csv')
+description_input_file = open('../data/batch_3/description_2.csv')
 reader = csv.reader(description_input_file)
-out_description = csv.writer(codecs.open("../data/batch_1/description_wikipedia_readgeek1.csv", "w", "utf-8"), delimiter=",",
+out_description = csv.writer(codecs.open("../data/batch_3/description_wikipedia_readgeek.csv", "w", "utf-8"), delimiter=",",
                              quoting=csv.QUOTE_ALL)
 out_description.writerow(
     ['Book Title', 'ISBN', 'Amazon URL', 'GoodReads Description', 'Wikipedia Description', 'Readgeek Description'])
