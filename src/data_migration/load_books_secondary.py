@@ -18,20 +18,21 @@ try:
         cursor.execute(sql_query)
         result = cursor.fetchall()
 
-        books_desc = pd.read_csv("../../data/batch_1/description_wikipedia_readgeek.csv", encoding="ISO-8859-1")
+        books_desc = pd.read_csv("../../data/batch_1/description_four (1).csv", encoding="ISO-8859-1")
         books = pd.read_csv("../../data/batch_1/books.csv", encoding="ISO-8859-1")
         reviews_data = pd.read_csv("../../data/batch_1/reviews_users.csv", encoding="ISO-8859-1")
         reviews_index = -1
 
         description_collection = mongo_brie_db.book_secondary_details
         for index, row in books_desc.iterrows():
+
             book_id = result[index]["id"]
             doc = dict()
             doc["id"] = book_id
 
-            book_title = row["Book Title"]
-            book_isbn = row["ISBN"]
-            print(book_title)
+            book_title = books["Book Title"][index]
+            book_isbn = books["ISBN"][index]
+            print(str(index) + " " + book_title)
 
             doc["title"] = book_title
             doc["genre"] = books["Genres"][index]
@@ -39,22 +40,26 @@ try:
             good_reads_desc = row["GoodReads Description"]
             if type(good_reads_desc) is float:
                 good_reads_desc = ""
-            doc["goodreads"] = give_clean_words_list(good_reads_desc)
+            if do_work:
+                doc["goodreads"] = give_clean_words_list(good_reads_desc)
 
             wiki_desc = row["Wikipedia Description"]
             if type(wiki_desc) is float:
                 wiki_desc = ""
-            doc["wikipedia"] = give_clean_words_list(wiki_desc)
+            if do_work:
+                doc["wikipedia"] = give_clean_words_list(wiki_desc)
 
             read_geek_desc = row["Readgeek Description"]
             if type(read_geek_desc) is float:
                 read_geek_desc = ""
-            doc["readgeek"] = give_clean_words_list(read_geek_desc)
+            if do_work:
+                doc["readgeek"] = give_clean_words_list(read_geek_desc)
 
-            # riffle_desc = row["Riffle Description"]
-            # if type(riffle_desc) is float:
-            #     riffle_desc = ""
-            # doc["riffle"] = give_clean_words_list(riffle_desc)
+            riffle_desc = row["Riffle Description"]
+            if type(riffle_desc) is float:
+                riffle_desc = ""
+            if do_work:
+                doc["riffle"] = give_clean_words_list(riffle_desc)
             #
             # amazon_desc = row["Amazon Description"]
             # if type(amazon_desc) is float:
@@ -65,11 +70,14 @@ try:
             doc["isbn"] = row["ISBN"]
 
             review_details_list = []
-            print(reviews_index)
             while True:
                 reviews_index += 1
-                review_isbn = reviews_data["ISBN"][reviews_index]
-                review_book_title = reviews_data["Book Title"][reviews_index]
+                try:
+                    review_isbn = reviews_data["ISBN"][reviews_index]
+                    review_book_title = reviews_data["Book Title"][reviews_index]
+
+                except KeyError:
+                    break
 
                 if review_book_title == book_title or review_isbn == book_isbn:
                     review_obj = dict()
@@ -80,15 +88,15 @@ try:
                     review_text = reviews_data["Review"][reviews_index]
                     if type(review_text) is float:
                         review_text = ""
-                    review_obj["review"] = give_clean_words_list(review_text)
-                    review_details_list.append(review_obj)
+                    if do_work:
+                        review_obj["review"] = give_clean_words_list(review_text)
+                        review_details_list.append(review_obj)
 
                 else:
                     reviews_index -= 1
                     break
-
             doc["reviews"] = review_details_list
-            print(len(review_details_list))
+            print("Comments = " + str(len(review_details_list)))
             description_collection.insert_one(doc)
 
 finally:

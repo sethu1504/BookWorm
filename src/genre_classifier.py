@@ -34,13 +34,13 @@ if __name__ == '__main__':
     mongo_brie_db = mongo_client.Brie
     description_collection = mongo_brie_db.book_secondary_details
 
-    all_books = description_collection.find()
+    all_books = description_collection.find(no_cursor_timeout=True)
 
     # data = pd.read_csv("../data/batch_1/description_wikipedia_readgeek.csv", encoding="ISO-8859-1")
     books = pd.read_csv("../data/batch_1/books.csv")
 
     genre_list = ["crime", "fantasy", "young-adult", "romance", "comedy", "dystopia",
-                  "action", "historical", "non-fiction", "science fiction"]
+                  "action", "historical", "non-fiction", "science fiction", "self-help"]
     no_of_genres = len(genre_list)
 
     for genre in genre_list:
@@ -54,6 +54,9 @@ if __name__ == '__main__':
         elif genre == "science fiction":
             genre = "SF"
 
+        elif genre == "self-help":
+            genre = "SH"
+
         genre_bag_words = crime_words.map(bags_format)
 
         genre_word_df = sqlContext.createDataFrame(genre_bag_words, schema=schema).cache()
@@ -62,6 +65,7 @@ if __name__ == '__main__':
 
     try:
         for book in all_books:
+            book_id = book["id"]
             gr_desc = book["goodreads"]
             if type(gr_desc) is float:
                 gr_desc = ""
@@ -71,6 +75,9 @@ if __name__ == '__main__':
             rg_desc = book["readgeek"]
             if type(rg_desc) is float:
                 rg_desc = ""
+            riff_desc = book["riffle"]
+            if type(riff_desc) is float:
+                riff_desc = ""
 
             sql_query = '''select author from app_book where id=''' + str(book["id"])
             with mysql_connection.cursor() as cursor:
@@ -79,7 +86,7 @@ if __name__ == '__main__':
 
             author = result['author']
 
-            tokens = gr_desc + wk_desc + rg_desc + author.split(" ")
+            tokens = gr_desc + wk_desc + rg_desc + riff_desc + author.split(" ")
             desc_tokens = sc.parallelize(tokens)
 
             words = desc_tokens.map(lambda w: (w, 1))
@@ -100,6 +107,8 @@ if __name__ == '__main__':
                     genre = "NF"
                 elif genre == "science fiction":
                     genre = "SF"
+                elif genre == "self-help":
+                    genre = "SH"
                 common_words = sqlContext.sql('''
                                               select description.word as Word, description.Count as desc_count,''' +
                                               genre + '''_words.Count as genre_count, description.Percent as desc_percent, 
@@ -125,9 +134,13 @@ if __name__ == '__main__':
             #     print(genre_list[i] + " " + str((genre_scores[i]) * 100))
             # print("\n")
 
-            genre_scores = np.array(genre_scores)
-            index_scores = np.argsort(genre_scores)
-            genre_scores = np.sort(genre_scores)
+            try:
+                genre_scores = np.array(genre_scores)
+                index_scores = np.argsort(genre_scores)
+                genre_scores = np.sort(genre_scores)
+
+            except TypeError:
+                continue
 
             base = genre_scores[-4]
             percent_changes = []
@@ -147,6 +160,8 @@ if __name__ == '__main__':
             genre_dict[genre_list[index_scores[-4]]] = base_percent
             print(genre_list[index_scores[-4]] + " " + str(base_percent) + "%\n")
             description_collection.update_one({"id": book["id"]}, {"$set": {"genre_dissect": genre_dict}}, upsert=False)
+
+        all_books.close()
 
     finally:
         mysql_connection.close()
