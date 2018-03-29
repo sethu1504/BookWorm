@@ -49,27 +49,29 @@ for genre in genre_list:
     genre_word_df.createOrReplaceTempView(genre + '_words')
 
 # Input Files
-books_data = pd.read_csv("../../data/batch_5/books.csv")
-img_price_data = pd.read_csv("../../data/batch_5/image_and_price.csv")
-desc_data = pd.read_csv("../../data/batch_5/description_all.csv")
-amazon_data = pd.read_csv("../../data/batch_5/amazon.csv")
-reviews_data = pd.read_csv("../../data/batch_5/reviews_users.csv")
+books_data = pd.read_csv("../../data/batch_4/books.csv")
+img_price_data = pd.read_csv("../../data/batch_4/image_and_price.csv")
+desc_data = pd.read_csv("../../data/batch_4/description_all.csv")
+amazon_data = pd.read_csv("../../data/batch_4/amazon.csv")
+reviews_data = pd.read_csv("../../data/batch_4/reviews_users.csv")
 
 # Created Files
-out = csv.writer(codecs.open("../../data/batch_5/final_1.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
+out = csv.writer(codecs.open("../../data/batch_4/final_1.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
 
 out.writerow(["ID", "Book Title", "ISBN", "Rating", "Author", "Language", "Pages", "Publication", "Publish Date",
-              "Publish Month", "Publish Year", "Genres", "Image", "Google Play", "Barnes and Noble", "Indie Bound",
-              "Amazon", "R1", "R2", "R3", "R4", "R5", "GoodReads_Description", "Wiki_Description",
-              "Readgeek_Description", "Riffle_Description", "Amazon_Description", "crime", "fantasy", "young-adult",
-              "romance", "comedy", "dystopia", "action", "historical", "non-fiction", "science fiction", "self-help"])
+              "Publish Month", "Publish Year", "Genres", "Image", "Google Play", "Google Play URL", "Barnes and Noble",
+              "Barnes and Noble URL", "Indie Bound", "Indie Bound URL",
+              "Amazon", "Amazon URL", "R1", "R1 URL", "R2", "R2 URL", "R3", "R3 URL", "R4", "R4 URL", "R5", "R5 URL",
+              "GoodReads_Description", "Wiki_Description", "Readgeek_Description", "Riffle_Description",
+              "Amazon_Description", "crime", "fantasy", "young-adult", "romance", "comedy", "dystopia", "action",
+              "historical", "non-fiction", "science fiction", "self-help"])
 
-out_user_review = csv.writer(codecs.open("../../data/batch_5/final_2.csv", "w", "utf-8"), delimiter=",",
+out_user_review = csv.writer(codecs.open("../../data/batch_4/final_2.csv", "w", "utf-8"), delimiter=",",
                              quoting=csv.QUOTE_ALL)
 out_user_review.writerow(["ID", "Book Title", "ISBN", "User ID", "User Name", "User URL", "Rating",
                           "Review Data", "Review"])
 
-book_id = 500000 - 1
+book_id = 400000 - 1
 reviews_index = -1
 month_dict = {v: k for k, v in enumerate(calendar.month_abbr)}
 for index, row in books_data.iterrows():
@@ -128,25 +130,67 @@ for index, row in books_data.iterrows():
     gp_price = img_price_data["Google Play"][index]
     if type(gp_price) is float or "http" in gp_price:
         gp_price = ""
+    gp_url = img_price_data["Google Play URL"][index]
+    if type(gp_url) is float:
+        gp_url = ""
 
     bnb_price = img_price_data["Barnes and Noble"][index]
     if type(bnb_price) is float or "http" in bnb_price:
         bnb_price = ""
+    bnb_url = img_price_data["Barnes and Noble URL"][index]
+    if type(bnb_url) is float:
+        bnb_url = ""
 
     indie_price = img_price_data["Indie Bound"][index]
     if type(indie_price) is float or "http" in indie_price:
         indie_price = ""
+    indie_url = img_price_data["Indie Bound URL"][index]
+    if type(indie_url) is float:
+        indie_url = ""
 
     # Amazon Data
     amazon_price = amazon_data["Amazon Price"][index]
     if type(amazon_price) is float or "http" in amazon_price:
-        indie_price = ""
+        amazon_price = ""
 
     r1 = amazon_data["R1 Title"][index]
+    if type(r1) is float:
+        r1 = ""
+    r1_url = amazon_data["R1 URL"][index]
+    if type(r1_url) is float:
+        r1_url = ""
+
     r2 = amazon_data["R2 Title"][index]
+    if type(r2) is float:
+        r2 = ""
+    r2_url = amazon_data["R2 URL"][index]
+    if type(r2_url) is float:
+        r2_url = ""
+
     r3 = amazon_data["R3 Title"][index]
+    if type(r3) is float:
+        r3 = ""
+    r3_url = amazon_data["R3 URL"][index]
+    if type(r3_url) is float:
+        r3_url = ""
+
     r4 = amazon_data["R4 Title"][index]
+    if type(r4) is float:
+        r4 = ""
+    r4_url = amazon_data["R4 URL"][index]
+    if type(r4_url) is float:
+        r4_url = ""
+
     r5 = amazon_data["R5 Title"][index]
+    if type(r5) is float:
+        r5 = ""
+    r5_url = amazon_data["R5 URL"][index]
+    if type(r5_url) is float:
+        r5_url = ""
+
+    amazon_url = amazon_data["Book URL"][index]
+    if type(amazon_url) is float:
+        amazon_url = ""
 
     # Description data
 
@@ -176,8 +220,9 @@ for index, row in books_data.iterrows():
     amazon_desc = give_clean_words_list(amazon_desc)
 
     output_result = [book_id, title, isbn, rating, author, language, pages, publication, pub_date, pub_month, pub_year,
-                     genres, img_url, gp_price, bnb_price, indie_price, amazon_price, r1, r2, r3, r4, r5,
-                     good_reads_desc, wiki_desc, read_geek_desc, riffle_desc, amazon_desc]
+                     genres, img_url, gp_price, gp_url, bnb_price, bnb_url, indie_price, indie_url, amazon_price,
+                     amazon_url, r1, r1_url, r2, r2_url, r3, r3_url, r4, r4_url, r5, r5_url, good_reads_desc, wiki_desc,
+                     read_geek_desc, riffle_desc, amazon_desc]
 
     # Reviews File
     no_comments = 0
