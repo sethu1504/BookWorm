@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Hot 100 - Overview Page</title>
+		<title>Book Search</title>
 
 		<!-- Bootstrap CSS -->
 		<!-- Latest compiled and minified CSS -->
@@ -16,52 +16,62 @@
 		<!-- Latest compiled and minified JavaScript -->
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
-		<link rel="stylesheet" type="text/css" href="/static/style.css">
 		<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
 	</head>
 	<body>
-		<div class="container">
-			<nav class="navbar navbar-default navbar-fixed-top navbar-inverse" role="navigation">
-			<div class="container">
-				<a class="navbar-brand" href="/">See-Hear</a>
-				<ul class="nav navbar-nav">
-					<li>
-						<a href="/hot100/overview">Hot 100</a>
-					</li>
-					<li>
-						<a href="/classic/overview/?genre=Country">Country</a>
-					</li>
-					<li>
-						<a href="/classic/overview/?genre=Pop">Pop</a>
-					</li>
-					<li>
-						<a href="/classic/overview/?genre=Rock">Rock</a>
-					</li>
-				</ul>
-			</div>
-			</nav>
-			<br>
-			<br>
-			<br>
-		</div>
-		<div class="container">
-			<br>
-			<br>
-			<div class="jumbotron">
-				<div class="container">
-					<h1>B.R.I.E</h1>
-					<p>Book Recommendation and Intelligence Engine</p>
-					<p>
-						<a href="/brie/list/" class="btn btn-primary btn-lg">See all the books!</a>
-					</p>
-				</div>
-			</div>
-		</div>
+
+        <form id="search_book" method="post">
+        <div class="container">
+        <div class="row">
+        <div id="custom-search-input">{% csrf_token %}
+          <div class="input-group col-md-12">
+            <input type="text" class="  search-query form-control" placeholder="Search Books" id="search_query"/>
+            <span class="input-group-btn">
+              <button class="btn btn-danger" type="submit">
+                <span class=" glyphicon glyphicon-search"></span>
+              </button>
+            </span>
+          </div>
+        </div>
+  </div>
+</div>
+        </form>
+
+
+
+        <div id="BookTitles">
+        	
+        </div>
+
 		<!-- jQuery -->
 		<script src="//code.jquery.com/jquery.js"></script>
 		<!-- Bootstrap JavaScript -->
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 		<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
 	</body>
+
+    <script>
+        $(document).on('submit', '#search_book', function(e){
+   e.preventDefault();
+
+   $.ajax({
+       type:'POST',
+       url:'../search_book',
+       data:{
+           query:$("#search_query").val(),
+           csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
+       },
+       success:function(data, textStatus, jqXHR){
+       	   $("#BookTitles").empty()
+       	   for(var i = 0; i < data.length; i++){
+              var title = data[i]["fields"].title
+              var id = data[i].pk
+              $('<a id = "' + id + '" href="../' + id + '" target="_blank">').html(title).appendTo("#BookTitles")
+              $('<br>').html(title).appendTo("#BookTitles")
+       	   }
+       }
+   });
+});
+    </script>
 </html>

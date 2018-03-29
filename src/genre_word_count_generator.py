@@ -22,7 +22,7 @@ def output_format(kv):
 
 if __name__ == '__main__':
     genre_list = ["crime", "fiction", "fantasy", "young-adult", "romance", "comedy", "dystopia",
-                  "action", "historical", "non-fiction", "science fiction"]
+                  "action", "historical", "non-fiction", "science fiction", "self-help"]
 
     for genre in genre_list:
         inputs = '../data/word_bags/' + genre + '_words.txt'

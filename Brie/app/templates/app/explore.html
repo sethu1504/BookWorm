@@ -1,54 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Book Search</title>
 
-		<!-- Bootstrap CSS -->
-		<!-- Latest compiled and minified CSS -->
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <title>Explore Books</title>
+  <!-- Bootstrap core CSS-->
+  <link href="../../static/basic_frame/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Custom fonts for this template-->
+  <link href="../../static/basic_frame/vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+  <!-- Page level plugin CSS-->
+  <link href="../../static/basic_frame/vendor/datatables/dataTables.bootstrap4.css" rel="stylesheet">
+  <!-- Custom styles for this template-->
+  <link href="../../static/basic_frame/css/sb-admin.css" rel="stylesheet">
+</head>
 
-		<!-- Optional theme -->
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
-
-		<!-- Latest compiled and minified JavaScript -->
-		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-
-		<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
-	</head>
-	<body>
-
-        <form id="search_book" method="post">
+<body class="fixed-nav sticky-footer bg-dark" id="page-top">
+  <!-- Navigation-->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top" id="mainNav">
+    <a class="navbar-brand" href="/brie/">B.R.I.E.</a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav navbar-sidenav" id="exampleAccordion">
+        <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Dashboard">
+          <a class="nav-link" href="index.html">
+            <span class="nav-link-text">Explore</span>
+          </a>
+        </li>
+        <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Charts">
+          <a class="nav-link" href="charts.html">
+            <span class="nav-link-text">Overview Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Tables">
+          <a class="nav-link" href="tables.html">
+            <span class="nav-link-text">Recommendation</span>
+          </a>
+        </li>
+        <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Components">
+          <a class="nav-link">
+            <span class="nav-link-text">Authors</span>
+          </a>
+        </li>
+        <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Example Pages">
+          <a class="nav-link">
+            <span class="nav-link-text">Publishers</span>
+          </a>
+        </li>
+        <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Menu Levels">
+          <a class="nav-link">
+            <span class="nav-link-text">Evaluation</span>
+          </a>
+        </li>
+      </ul>
+      <ul class="navbar-nav sidenav-toggler">
+        <li class="nav-item">
+          <a class="nav-link text-center" id="sidenavToggler">
+            <i class="fa fa-fw fa-angle-left"></i>
+          </a>
+        </li>
+      </ul>
+      
+    </div>
+  </nav>
+  <div class="content-wrapper">
+    <div class="container-fluid">
+      <form id="search_book" method="post">
         <div class="container">
         <div class="row">
         <div id="custom-search-input">{% csrf_token %}
-          <div class="input-group col-md-12">
-            <input type="text" class="  search-query form-control" placeholder="Search Books" id="search_query"/>
+          <div class="input-group col-md-12" style="margin-left: 90px;">
+            <input type="text" class="search-query form-control" placeholder="Search Books" id="search_query" style="width:840px;"/>
             <span class="input-group-btn">
-              <button class="btn btn-danger" type="submit">
-                <span class=" glyphicon glyphicon-search"></span>
+              <button type="submit">
+                <span class="glyphicon glyphicon-search">
+                  <img src="../../static/img/search.png" style="height: 33px;width: 25px;">
+                </span>
               </button>
             </span>
           </div>
         </div>
   </div>
 </div>
-        </form>
-
-        <div id="BookTitles">
-        	
+</form>
+<div id="BookTitles">
+          
         </div>
-
-		<!-- jQuery -->
-		<script src="//code.jquery.com/jquery.js"></script>
-		<!-- Bootstrap JavaScript -->
-		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
-		<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-	</body>
-
+      </div>
+    </div>
+    <a class="scroll-to-top rounded" href="#page-top">
+      <i class="fa fa-angle-up"></i>
+    </a>
+    <!-- Logout Modal-->
+    <!-- Bootstrap core JavaScript-->
+    <script src="../../static/basic_frame/vendor/jquery/jquery.min.js"></script>
+    <script src="../../static/basic_frame/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- Core plugin JavaScript-->
+    <script src="../../static/basic_frame/vendor/jquery-easing/jquery.easing.min.js"></script>
+    <!-- Page level plugin JavaScript-->
+    <script src="../../static/basic_frame/vendor/chart.js/Chart.min.js"></script>
+    <script src="../../static/basic_frame/vendor/datatables/jquery.dataTables.js"></script>
+    <script src="../../static/basic_frame/vendor/datatables/dataTables.bootstrap4.js"></script>
+    <!-- Custom scripts for all pages-->
+    <script src="../../static/basic_frame/js/sb-admin.min.js"></script>
+    <!-- Custom scripts for this page-->
+    <script src="../../static/basic_frame/js/sb-admin-datatables.min.js"></script>
+    <script src="../../static/basic_frame/js/sb-admin-charts.min.js"></script>
     <script>
         $(document).on('submit', '#search_book', function(e){
    e.preventDefault();
@@ -61,15 +123,25 @@
            csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
        },
        success:function(data, textStatus, jqXHR){
-       	   $("#BookTitles").empty()
-       	   for(var i = 0; i < data.length; i++){
+           $("#BookTitles").empty()
+           if(data.length == 0)
+           {
+              $('<p>No relevant titles found</p>').html(title).appendTo("#BookTitles")
+           }
+           else
+           {
+              for(var i = 0; i < data.length; i++){
               var title = data[i]["fields"].title
               var id = data[i].pk
-              $('<a id = "' + id + '" href="../book/' + id + '" target="_blank">').html(title).appendTo("#BookTitles")
+              $('<a id = "' + id + '" href="../' + id + '" target="_blank">').html(title).appendTo("#BookTitles")
               $('<br>').html(title).appendTo("#BookTitles")
-       	   }
+              }
+           }
        }
    });
 });
     </script>
+  </div>
+</body>
+
 </html>
