@@ -16,44 +16,52 @@
   <link href="../../static/basic_frame/vendor/datatables/dataTables.bootstrap4.css" rel="stylesheet">
   <!-- Custom styles for this template-->
   <link href="../../static/basic_frame/css/sb-admin.css" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="../../static/table/vendor/animate/animate.css">
+<!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="../../static/table/vendor/select2/select2.min.css">
+<!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="../../static/table/vendor/perfect-scrollbar/perfect-scrollbar.css">
+<!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="../../static/table/css/util.css">
+  <link rel="stylesheet" type="text/css" href="../../static/table/css/main.css">
 </head>
 
 <body class="fixed-nav sticky-footer bg-dark" id="page-top">
   <!-- Navigation-->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top" id="mainNav">
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top" id="mainNav" style="background-color: #393939">
     <a class="navbar-brand" href="/brie/">B.R.I.E.</a>
     <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarResponsive">
-      <ul class="navbar-nav navbar-sidenav" id="exampleAccordion">
+      <ul class="navbar-nav navbar-sidenav" id="exampleAccordion" style="background-color: #222222">
         <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Dashboard">
-          <a class="nav-link" href="index.html">
+          <a class="nav-link" href="/brie/search">
             <span class="nav-link-text">Explore</span>
           </a>
         </li>
         <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Charts">
-          <a class="nav-link" href="charts.html">
+          <a class="nav-link" href="/brie/overview">
             <span class="nav-link-text">Overview Dashboard</span>
           </a>
         </li>
         <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Tables">
-          <a class="nav-link" href="tables.html">
+          <a class="nav-link" href="/brie/recommendation">
             <span class="nav-link-text">Recommendation</span>
           </a>
         </li>
         <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Components">
-          <a class="nav-link">
+          <a class="nav-link" href="/brie/authors">
             <span class="nav-link-text">Authors</span>
           </a>
         </li>
         <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Example Pages">
-          <a class="nav-link">
+          <a class="nav-link" href="/brie/publishers">
             <span class="nav-link-text">Publishers</span>
           </a>
         </li>
         <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Menu Levels">
-          <a class="nav-link">
+          <a class="nav-link" href="/brie/evaluation">
             <span class="nav-link-text">Evaluation</span>
           </a>
         </li>
@@ -70,26 +78,48 @@
   </nav>
   <div class="content-wrapper">
     <div class="container-fluid">
-      <form id="search_book" method="post">
+    <form id="search_book" method="post">
         <div class="container">
         <div class="row">
         <div id="custom-search-input">{% csrf_token %}
           <div class="input-group col-md-12" style="margin-left: 90px;">
-            <input type="text" class="search-query form-control" placeholder="Search Books" id="search_query" style="width:840px;"/>
+            <input type="text" placeholder="Search Books" id="search_query" style="width:840px; background-color: #D0D3D4"/>
             <span class="input-group-btn">
               <button type="submit">
                 <span class="glyphicon glyphicon-search">
-                  <img src="../../static/img/search.png" style="height: 33px;width: 25px;">
+                  <img src="../../static/img/search.png" style="height: 33px;width: 25px; margin-left: 10px">
                 </span>
               </button>
             </span>
           </div>
         </div>
+
   </div>
 </div>
 </form>
-<div id="BookTitles">
-          
+    <div class="table100 ver3 m-b-110" style="margin-top: 15px; visibility: hidden;" id="BooksTable">
+          <div class="table100-head">
+            <table>
+              <thead>
+                <tr class="row100 head">
+                  <th class="cell100 column_cover">Cover</th>
+                  <th class="cell100 column1">Title</th>
+                  <th class="cell100 column2">Author</th>
+                  <th class="cell100 column3">Publication</th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+
+          <div class="table100-body js-pscroll">
+            <table id="book_table_content">
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div style="visibility: hidden; margin-left: 500px;" id="BooksNone">
+        <h4>No Relevant Titles Found</h4>
         </div>
       </div>
     </div>
@@ -123,18 +153,29 @@
            csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
        },
        success:function(data, textStatus, jqXHR){
-           $("#BookTitles").empty()
+           var table_content = $("#book_table_content")
+           document.getElementById("BooksTable").style.visibility = "hidden"
+           document.getElementById("BooksNone").style.visibility = "hidden"
+           table_content.empty()
            if(data.length == 0)
            {
-              $('<p>No relevant titles found</p>').html(title).appendTo("#BookTitles")
+              document.getElementById("BooksNone").style.visibility = "visible"
            }
            else
            {
+              document.getElementById("BooksTable").style.visibility = "visible"
               for(var i = 0; i < data.length; i++){
               var title = data[i]["fields"].title
+              var author = data[i]["fields"].author
+              var publication = data[i]["fields"].publication
+              var img_url = data[i]["fields"].img_url
               var id = data[i].pk
-              $('<a id = "' + id + '" href="../' + id + '" target="_blank">').html(title).appendTo("#BookTitles")
-              $('<br>').html(title).appendTo("#BookTitles")
+
+              table_content.append('<tr class="row100 body">' +'<td class="cell100 column_cover"><a style="color:inherit" id = "' + id + '" href="../' + id + '" target="_blank"><img style= "width:50px;"src="' + img_url + '"></td>'
+                                    +  '<td class="cell100 column1"> <a style="color:inherit" id = "' + id + '" href="../' + id + '" target="_blank">' + title +'</td>'
+                                    + '<td class="cell100 column2">' + author +'</td>'
+                                    + '<td class="cell100 column3">' + publication +'</td>'
+                                    + '</tr>')
               }
            }
        }
