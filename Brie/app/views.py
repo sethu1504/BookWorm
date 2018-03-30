@@ -17,12 +17,10 @@ def list_all(request):
 
 
 def search_book(request):
-    print("In here")
     return render(request, 'app/explore.html')
 
 
 def search_result(request):
-    print("In here")
     if request.method == "POST":
         query = request.POST["query"]
         data = Book.objects.filter(title__icontains=query)
@@ -40,3 +38,23 @@ def book_view(request, book_id):
     context["pages"] = book.pages
     context["publication"] = book.publication
     return render(request, 'app/book_view.html', context)
+
+
+def overview(request):
+    return render(request, 'app/overview.html')
+
+
+def publishers(request):
+    return render(request, 'app/publishers.html')
+
+
+def recommendation(request):
+    return render(request, 'app/recommendation.html')
+
+
+def authors(request):
+    return render(request, 'app/authors.html')
+
+
+def evaluation(request):
+    return render(request, 'app/evaluation.html')
