@@ -99,7 +99,7 @@
 </form>
     <form id="rated_books" method="post">
     <div class="table100 ver3 m-b-110" style="margin-top: 15px; visibility: hidden;" id="BooksTable">{% csrf_token %}
-          <div class="table100-head">
+          <div class="table100-head" name="recommTable">
             <table>
               <thead>
                 <tr class="row100 head">
@@ -122,9 +122,32 @@
           </div>
         </div>
         <div>
-        <button type="submit" class="btn btn-primary active" style="width: 50%; margin-left: 23%">Get Recommendations</button>
+        <button type="submit" class="btn btn-primary active" style="width: 50%; margin-left: 23%; margin-top: -5%">Get Recommendations<a href="#recommTable"></a></button>
         </div>
         </form>
+        <h4 style="width: 50%; margin-left: 40%; visibility: hidden;" id="RecommTitle">Recommendations</h4>
+        <div class="table100 ver3 m-b-110" style="margin-top: 15px; visibility: hidden;" id="RecommendationsTable">
+          <div class="table100-head">
+            <table>
+              <thead>
+                <tr class="row100 head">
+                  <th class="cell100 column_cover">Cover</th>
+                  <th class="cell100 column1">Title</th>
+                  <th class="cell100 column2">Author</th>
+                  <th class="cell100 column3">Publication</th>
+                  <th class="cell100 column2">Score</th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+
+          <div class="table100-body js-pscroll">
+            <table id="recommTableContent">
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
     <a class="scroll-to-top rounded" href="#page-top">
@@ -163,7 +186,7 @@
               var table_content = $("#book_table_content")
               document.getElementById("BooksTable").style.visibility = "visible"
 
-              $("tr.row100.body").each(function(){
+              $("tr.row100.body.actual").each(function(){
                 var checkbox = $(this).find("input")[0]
                 if(!checkbox.checked)
                 {
@@ -182,7 +205,7 @@
               }
               var id = data[i]["id"]
 
-              table_content.append('<tr class="row100 body"><td class="cell100 column_cover"><input type="checkbox" class="choose"></td>' +'<td class="cell100 column_cover"><a style="color:inherit" id = "' + id + '" href="../' + id + '" target="_blank"><img style= "width:50px;"src="' + img_url + '"></td>'
+              table_content.append('<tr class="row100 body actual"><td class="cell100 column_cover"><input type="checkbox" class="choose"></td>' +'<td class="cell100 column_cover"><a style="color:inherit" id = "' + id + '" href="../' + id + '" target="_blank"><img style= "width:50px;"src="' + img_url + '"></td>'
                                     +  '<td class="cell100 column1"> <a style="color:inherit" id = "' + id + '" href="../' + id + '" target="_blank">' + title +'</td>'
                                     + '<td class="cell100 column2">' + author +'</td>'
                                     + '<td class="cell100 column3">' + publication +'</td>'
@@ -196,32 +219,74 @@
 
 $(document).on('submit', '#rated_books', function(e){
    e.preventDefault();
-
    var selBooks = []
-          $("tr.row100.body").each(function(){
+   var already_said = false
+   var atleast_one = false
+          $("tr.row100.body.actual").each(function(){
                 var rating = $(this).find("input")[1]
                 var checkbox = $(this).find("input")[0]
                 if(checkbox.checked)
                 {
                     book_id = rating.id
                     rating = rating.value
-                    if(rating === "")
+                    if(rating === "" && already_said === false)
                     {
                       window.alert("Please enter rating for selected books")
+                      already_said = true
                     }
                     selBooks.push({"book_id": book_id,
                                    "rating": rating})
+                    atleast_one = true
                 }
               });
-
+  if(atleast_one === false){
+    window.alert("Please Select Books and Give Ratings")
+  }
+  else{
    $.ajax({
        type:'POST',
        url:'../display_recommendations',
        data:{
            books:JSON.stringify(selBooks),
            csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
+       },
+       success:function(data, textStatus, jqXHR){
+        data = JSON.parse(data)
+        document.getElementById("RecommendationsTable").style.visibility = "visible"
+        document.getElementById("RecommTitle").style.visibility = "visible"
+        var table_content = $("#recommTableContent")
+        table_content.empty()
+        if(data.length > 0)
+        {
+            for(var i = 0; i < data.length; i++){
+              if(i == 30){
+                break
+              }
+              var title = data[i]["title"]
+              var author = data[i]["author"]
+              var publication = data[i]["publication"]
+              var img_url = data[i]["img_url"]
+              var score = (data[i]["score"] * 100).toFixed(2)
+              if(img_url === ""){
+                img_url = "../../static/img/default_book.jpg"
+              }
+              var id = data[i]["id"]
+
+              table_content.append('<tr class="row100 body recomm">' +'<td class="cell100 column_cover"><a style="color:inherit" id = "' + id + '" href="../' + id + '" target="_blank"><img style= "width:50px;"src="' + img_url + '"></td>'
+                                    +  '<td class="cell100 column1"> <a style="color:inherit" id = "' + id + '" href="../' + id + '" target="_blank">' + title +'</td>'
+                                    + '<td class="cell100 column2">' + author +'</td>'
+                                    + '<td class="cell100 column3">' + publication +'</td>'
+                                    + '<td class="cell100 column2">' + score +'</td>'
+                                    + '</tr>')
+              }
+        }
+        else
+        {
+          window.alert("Sorry, B.R.I.E could not find any Recommendations for you")
+        }
        }
        })
+  }
 });
 
 

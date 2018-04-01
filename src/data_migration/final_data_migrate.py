@@ -152,7 +152,7 @@ for index, row in books_data.iterrows():
     doc["pub_date"] = pub_date
     doc["pub_month"] = pub_month
     doc["pub_year"] = pub_year
-    doc["genres"] = genres
+    doc["genres"] = give_text_format(genres)
     doc["image"] = image
     doc["google_play_price"] = gp_price
     doc["google_play_url"] = gp_url

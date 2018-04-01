@@ -104,6 +104,7 @@ dislike_books = dislike_books + dislike_sim_books
 
 i = 0
 for book in like_books:
+    book_second_details = description_collection.find_one({"title": book})
     desc_words = book_second_details["goodreads"] + book_second_details["wikipedia"] + book_second_details["readgeek"] \
         + book_second_details["riffle"]
 
@@ -172,16 +173,16 @@ for i in range(0, len(supplementary_genre)):
 
         for book in prediction_books:
             book_genres = book["genre_dissect"]
-            # if not(book_genres[basic_genre]) > book_genres[secondary_genre] > book_genres[supp_genre_1] > \
-            #         book_genres[supp_genre_2]:
-            #     continue
+            if not(book_genres[basic_genre]) > book_genres[secondary_genre] > book_genres[supp_genre_1] > \
+                    book_genres[supp_genre_2]:
+                continue
             desc_words = book["goodreads"] + book["wikipedia"] + book["readgeek"] + book["riffle"]
 
             like_prob = 0
             dislike_prob = 0
             for word in desc_words:
                 word_like_prob = (like_words_dict[word] + alpha) / (total_words_like + total_unique_words)
-                word_dislike_prob = (dislike_words_dict[word] + alpha) / (total_words_like + total_unique_words)
+                word_dislike_prob = (dislike_words_dict[word] + alpha) / (total_words_dislike + total_unique_words)
                 word_strength_dict[word] = math.log(word_like_prob / word_dislike_prob)
                 like_prob += math.log(word_like_prob)
                 dislike_prob += math.log(word_dislike_prob)
