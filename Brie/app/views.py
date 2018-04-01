@@ -82,10 +82,6 @@ def book_view(request, book_id):
     return render(request, 'app/book_view.html', context)
 
 
-
-
-
-
 def overview(request):
     return render(request, 'app/overview.html')
 
