@@ -16,9 +16,17 @@
   <link href="../../static/basic_frame/vendor/datatables/dataTables.bootstrap4.css" rel="stylesheet">
   <!-- Custom styles for this template-->
   <link href="../../static/basic_frame/css/sb-admin.css" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="../../static/table/vendor/animate/animate.css">
+<!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="../../static/table/vendor/select2/select2.min.css">
+<!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="../../static/table/vendor/perfect-scrollbar/perfect-scrollbar.css">
+<!--===============================================================================================-->
+  <link rel="stylesheet" type="text/css" href="../../static/table/css/util.css">
+  <link rel="stylesheet" type="text/css" href="../../static/table/css/main.css">
 </head>
 
-<body class="fixed-nav sticky-footer" id="page-top">
+<body class="fixed-nav sticky-footer bg-dark" id="page-top">
   <!-- Navigation-->
   <nav class="navbar navbar-expand-lg navbar-dark fixed-top" id="mainNav" style="background-color: #393939">
     <a class="navbar-brand" href="/brie/">B.R.I.E.</a>
@@ -70,7 +78,53 @@
   </nav>
   <div class="content-wrapper">
     <div class="container-fluid">
-      
+    <form id="search_book" method="post">
+        <div class="container">
+        <div class="row">
+        <div id="custom-search-input">{% csrf_token %}
+          <div class="input-group col-md-12" style="margin-left: 90px;">
+            <input type="text" placeholder="Search Books" id="search_query" style="width:840px; background-color: #D0D3D4"/>
+            <span class="input-group-btn">
+              <button type="submit">
+                <span class="glyphicon glyphicon-search">
+                  <img src="../../static/img/search.png" style="height: 33px;width: 25px; margin-left: 10px">
+                </span>
+              </button>
+            </span>
+          </div>
+        </div>
+
+  </div>
+</div>
+</form>
+    <form id="rated_books" method="post">
+    <div class="table100 ver3 m-b-110" style="margin-top: 15px; visibility: hidden;" id="BooksTable">{% csrf_token %}
+          <div class="table100-head">
+            <table>
+              <thead>
+                <tr class="row100 head">
+                  <th class="cell100 column_cover"></th>
+                  <th class="cell100 column_cover">Cover</th>
+                  <th class="cell100 column1">Title</th>
+                  <th class="cell100 column2">Author</th>
+                  <th class="cell100 column3">Publication</th>
+                  <th class="cell100 column2">Rating</th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+
+          <div class="table100-body js-pscroll">
+            <table id="book_table_content">
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+        <button type="submit" class="btn btn-primary active" style="margin-left: 500px; width: 400px; margin-top: -90px;">Get Recommendations</button>
+        </div>
+        </form>
       </div>
     </div>
     <a class="scroll-to-top rounded" href="#page-top">
@@ -91,6 +145,87 @@
     <!-- Custom scripts for this page-->
     <script src="../../static/basic_frame/js/sb-admin-datatables.min.js"></script>
     <script src="../../static/basic_frame/js/sb-admin-charts.min.js"></script>
+    <script>
+        $(document).on('submit', '#search_book', function(e){
+   e.preventDefault();
+
+   $.ajax({
+       type:'POST',
+       url:'../search_book',
+       data:{
+           query:$("#search_query").val(),
+           csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
+       },
+       success:function(data, textStatus, jqXHR){
+           if(data.length > 0)
+           {
+              data = JSON.parse(data)
+              var table_content = $("#book_table_content")
+              document.getElementById("BooksTable").style.visibility = "visible"
+
+              $("tr.row100.body").each(function(){
+                var checkbox = $(this).find("input")[0]
+                if(!checkbox.checked)
+                {
+                  $(this)[0].remove()
+                }
+              });
+
+
+              for(var i = 0; i < data.length; i++){
+              var title = data[i]["title"]
+              var author = data[i]["author"]
+              var publication = data[i]["publication"]
+              var img_url = data[i]["img_url"]
+              if(img_url === ""){
+                img_url = "../../static/img/default_book.jpg"
+              }
+              var id = data[i]["id"]
+
+              table_content.append('<tr class="row100 body"><td class="cell100 column_cover"><input type="checkbox" class="choose"></td>' +'<td class="cell100 column_cover"><a style="color:inherit" id = "' + id + '" href="../' + id + '" target="_blank"><img style= "width:50px;"src="' + img_url + '"></td>'
+                                    +  '<td class="cell100 column1"> <a style="color:inherit" id = "' + id + '" href="../' + id + '" target="_blank">' + title +'</td>'
+                                    + '<td class="cell100 column2">' + author +'</td>'
+                                    + '<td class="cell100 column3">' + publication +'</td>'
+                                    + '<td class="cell100 column2"><input type="text" id=' + id + ' style="width:25px;"></td>'
+                                    + '</tr>')
+              }
+           }
+       }
+   });
+});
+
+$(document).on('submit', '#rated_books', function(e){
+   e.preventDefault();
+
+   var selBooks = []
+          $("tr.row100.body").each(function(){
+                var rating = $(this).find("input")[1]
+                var checkbox = $(this).find("input")[0]
+                if(checkbox.checked)
+                {
+                    book_id = rating.id
+                    rating = rating.value
+                    if(rating === "")
+                    {
+                      window.alert("Please enter rating for selected books")
+                    }
+                    selBooks.push({"book_id": book_id,
+                                   "rating": rating})
+                }
+              });
+
+   $.ajax({
+       type:'POST',
+       url:'../display_recommendations',
+       data:{
+           books:JSON.stringify(selBooks),
+           csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
+       }
+       })
+});
+
+
+    </script>
   </div>
 </body>
 

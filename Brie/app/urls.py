@@ -6,7 +6,6 @@ app_name = 'app'
 
 urlpatterns = [
     path('', views.index, name='index'),
-    path('list/', views.list_all, name='list_all'),
     path('search/', views.search_book, name="search"),
     path('overview/', views.overview, name="overview"),
     path('recommendation/', views.recommendation, name="recommendation"),
@@ -14,5 +13,6 @@ urlpatterns = [
     path('publishers/', views.publishers, name="publishers"),
     path('evaluation/', views.evaluation, name="evaluation"),
     path('search_book', views.search_result, name="create"),
+    path('display_recommendations', views.get_recommendations, name="getRecommendations"),
     path('<int:book_id>/', views.book_view, name="create")
 ]

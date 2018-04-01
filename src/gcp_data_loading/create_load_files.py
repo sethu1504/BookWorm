@@ -49,14 +49,14 @@ for genre in genre_list:
     genre_word_df.createOrReplaceTempView(genre + '_words')
 
 # Input Files
-books_data = pd.read_csv("../../data/batch_4/books.csv")
-img_price_data = pd.read_csv("../../data/batch_4/image_and_price.csv")
-desc_data = pd.read_csv("../../data/batch_4/description_all.csv")
-amazon_data = pd.read_csv("../../data/batch_4/amazon.csv")
-reviews_data = pd.read_csv("../../data/batch_4/reviews_users.csv")
+books_data = pd.read_csv("../../data/batch_1/books.csv")
+img_price_data = pd.read_csv("../../data/batch_1/image_and_price.csv")
+desc_data = pd.read_csv("../../data/batch_1/description_all.csv")
+amazon_data = pd.read_csv("../../data/batch_1/amazon.csv")
+reviews_data = pd.read_csv("../../data/batch_1/reviews_users.csv")
 
 # Created Files
-out = csv.writer(codecs.open("../../data/batch_4/final_1.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
+out = csv.writer(codecs.open("../../data/batch_1/final_1.csv", "w", "utf-8"), delimiter=",", quoting=csv.QUOTE_ALL)
 
 out.writerow(["ID", "Book Title", "ISBN", "Rating", "Author", "Language", "Pages", "Publication", "Publish Date",
               "Publish Month", "Publish Year", "Genres", "Image", "Google Play", "Google Play URL", "Barnes and Noble",
@@ -66,12 +66,12 @@ out.writerow(["ID", "Book Title", "ISBN", "Rating", "Author", "Language", "Pages
               "Amazon_Description", "crime", "fantasy", "young-adult", "romance", "comedy", "dystopia", "action",
               "historical", "non-fiction", "science fiction", "self-help"])
 
-out_user_review = csv.writer(codecs.open("../../data/batch_4/final_2.csv", "w", "utf-8"), delimiter=",",
+out_user_review = csv.writer(codecs.open("../../data/batch_1/final_2.csv", "w", "utf-8"), delimiter=",",
                              quoting=csv.QUOTE_ALL)
 out_user_review.writerow(["ID", "Book Title", "ISBN", "User ID", "User Name", "User URL", "Rating",
                           "Review Data", "Review"])
 
-book_id = 400000 - 1
+book_id = 100000 - 1
 reviews_index = -1
 month_dict = {v: k for k, v in enumerate(calendar.month_abbr)}
 for index, row in books_data.iterrows():

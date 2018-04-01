@@ -40,25 +40,21 @@ try:
             good_reads_desc = row["GoodReads Description"]
             if type(good_reads_desc) is float:
                 good_reads_desc = ""
-            if do_work:
                 doc["goodreads"] = give_clean_words_list(good_reads_desc)
 
             wiki_desc = row["Wikipedia Description"]
             if type(wiki_desc) is float:
                 wiki_desc = ""
-            if do_work:
                 doc["wikipedia"] = give_clean_words_list(wiki_desc)
 
             read_geek_desc = row["Readgeek Description"]
             if type(read_geek_desc) is float:
                 read_geek_desc = ""
-            if do_work:
                 doc["readgeek"] = give_clean_words_list(read_geek_desc)
 
             riffle_desc = row["Riffle Description"]
             if type(riffle_desc) is float:
                 riffle_desc = ""
-            if do_work:
                 doc["riffle"] = give_clean_words_list(riffle_desc)
             #
             # amazon_desc = row["Amazon Description"]
@@ -88,7 +84,6 @@ try:
                     review_text = reviews_data["Review"][reviews_index]
                     if type(review_text) is float:
                         review_text = ""
-                    if do_work:
                         review_obj["review"] = give_clean_words_list(review_text)
                         review_details_list.append(review_obj)
 
