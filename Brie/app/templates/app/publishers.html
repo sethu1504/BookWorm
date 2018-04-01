@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <meta name="description" content="">
   <meta name="author" content="">
-  <title>Publishers Reports</title>
+  <title>Publisher Reports</title>
   <!-- Bootstrap core CSS-->
   <link href="../../static/basic_frame/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <!-- Custom fonts for this template-->
@@ -16,6 +16,7 @@
   <link href="../../static/basic_frame/vendor/datatables/dataTables.bootstrap4.css" rel="stylesheet">
   <!-- Custom styles for this template-->
   <link href="../../static/basic_frame/css/sb-admin.css" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 
 <body class="fixed-nav sticky-footer" id="page-top">
@@ -70,7 +71,16 @@
   </nav>
   <div class="content-wrapper">
     <div class="container-fluid">
-      
+      <div>
+        {{ pub_by_book_div|safe }}
+      </div>
+      <div class="row">
+        <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+          {{ pub_by_year_div|safe }}
+        </div>
+        <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+          
+        </div>
       </div>
     </div>
     <a class="scroll-to-top rounded" href="#page-top">

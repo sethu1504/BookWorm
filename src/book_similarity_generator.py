@@ -68,6 +68,3 @@ for index, row in books_data.iterrows():
             break
     print(processed_books)
     out.writerow(write_row)
-
-
-

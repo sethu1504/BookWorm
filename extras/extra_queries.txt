@@ -6,3 +6,5 @@ ALTER TABLE app_book CHANGE publication publication VARCHAR(1000) CHARACTER SET 
 
 # Mongo query to find books with specific genres
 db.book_secondary_details.find({$and:[{"genre_dissect.historical":{$exists:true}},{"genre_dissect.self-help":{$exists:true}}]},{"genre_dissect":1})
+
+db.Books.aggregate([{"$group":{"_id":"$author", count:{$sum:1}}},{$sort: {count: -1}}])

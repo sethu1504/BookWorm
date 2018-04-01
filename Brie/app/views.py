@@ -5,8 +5,11 @@ import re
 from pymongo import MongoClient
 from collections import defaultdict
 import math
+import plotly
 import plotly.graph_objs as go
 import plotly.offline as opy
+from plotly.graph_objs import Scatter, Layout, Bar
+import pandas as pd
 
 mongo_client = MongoClient('mongodb://sethu:sethu123@localhost:27017/Brie')
 mongo_brie_db = mongo_client.Brie
@@ -87,7 +90,75 @@ def overview(request):
 
 
 def publishers(request):
-    return render(request, 'app/publishers.html')
+
+    # Top Publishers by number of books
+    publishers_by_books = books_collection.aggregate([{"$group": {"_id": "$publication", "count": {"$sum": 1}}},
+                                                      {"$sort": {"count": -1}}, {"$limit": 16}])
+
+    publisher_names = []
+    book_count = []
+    for pub_book_agg in publishers_by_books:
+        pub_name = pub_book_agg["_id"]
+        if pub_name == "":
+            continue
+        publisher_names.append(pub_name)
+        book_count.append(pub_book_agg["count"])
+
+    context = dict()
+
+    pub_by_book_div = plotly.offline.plot({"data": [Bar(x=publisher_names, y=book_count,
+                                                        marker=dict(color='rgb(135,195,132)'))],
+                                           'layout': Layout(title='<b>Top Publishers by Books</b>')},
+                                          output_type="div", include_plotlyjs=False, link_text="", show_link="False")
+    context["pub_by_book_div"] = pub_by_book_div
+
+    # Top Publishers by years
+    start_year = 1850
+    end_year = start_year + 10
+    i = 0
+    year_labels = []
+    publisher_names_by_year = []
+    while end_year <= 2020:
+        publisher_by_books_by_year = books_collection.aggregate([{"$match": {"pub_year": {"$gte": start_year,
+                                                                                          "$lt": end_year}}},
+                                                                 {"$group": {"_id": "$publication",
+                                                                             "count": {"$sum": 1}}},
+                                                                 {"$sort": {"count": -1}}, {"$limit": 2}])
+
+        for publisher in publisher_by_books_by_year:
+            if publisher["_id"] == '':
+                continue
+            print(publisher)
+            year_labels.append(str(start_year) + " - " + str(end_year))
+            publisher_names_by_year.append(publisher["_id"])
+            i += 1
+            break
+        end_year += 10
+        start_year += 10
+
+    trace = go.Table(
+        header=dict(values=[['Decades'], ['Top Publishers']],
+                    line=dict(color='black'),
+                    fill=dict(color='#a1c3d1')
+                    ),
+        cells=dict(values=[year_labels,
+                           publisher_names_by_year],
+                   line=dict(color='black'))
+    )
+
+    data = [trace]
+    layout = go.Layout(title="<b>Popular Publishers by Decade</b>", height=550, width=600,
+                       autosize=False)
+    figure = go.Figure(data=data, layout=layout)
+    pub_by_year_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
+                               show_link=False)
+
+    context["pub_by_year_div"] = pub_by_year_div
+
+    # Price of Books by Publishers
+    # for publisher in publisher_names:
+
+    return render(request, 'app/publishers.html', context)
 
 
 def recommendation(request):
