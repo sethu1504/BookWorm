@@ -1,6 +1,16 @@
 from pymongo import MongoClient
 import pandas as pd
 
+
+def give_text_format(text):
+    if len(text) == 0:
+        return []
+    text = text[1: len(text) - 1]
+    new_list = []
+    for word in text.split(","):
+        new_list.append(word.replace("'", '').strip())
+    return new_list
+
 mongo_client = MongoClient('mongodb://sethu:sethu123@localhost:27017/Brie')
 mongo_brie_db = mongo_client.Brie
 
@@ -35,7 +45,7 @@ for index, row in books_data.iterrows():
 
     genres = row["Genres"]
     if type(genres) is float:
-        genres = []
+        genres = ""
 
     image = row["Image"]
     if type(image) is float:
@@ -103,23 +113,23 @@ for index, row in books_data.iterrows():
 
     good_reads_desc = row["GoodReads_Description"]
     if type(good_reads_desc) is float:
-        good_reads_desc = []
+        good_reads_desc = ""
 
     wiki_desc = row["Wiki_Description"]
     if type(wiki_desc) is float:
-        wiki_desc = []
+        wiki_desc = ""
 
     read_geek_desc = row["Readgeek_Description"]
     if type(read_geek_desc) is float:
-        read_geek_desc = []
+        read_geek_desc = ""
 
     riffle_desc = row["Riffle_Description"]
     if type(riffle_desc) is float:
-        riffle_desc = []
+        riffle_desc = ""
 
     amazon_desc = row["Amazon_Description"]
     if type(amazon_desc) is float:
-        amazon_desc = []
+        amazon_desc = ""
 
     genre_list = ["crime", "fantasy", "young-adult", "romance", "comedy", "dystopia", "action", "historical",
                   "non-fiction", "science fiction", "self-help"]
@@ -162,11 +172,11 @@ for index, row in books_data.iterrows():
     doc["r4_url"] = r4_url
     doc["r5"] = r5
     doc["r5_url"] = r5_url
-    doc["goodreads_desc"] = good_reads_desc
-    doc["wiki_desc"] = wiki_desc
-    doc["riffle_desc"] = riffle_desc
-    doc["amazon_desc"] = amazon_desc
-    doc["readgeek_desc"] = read_geek_desc
+    doc["goodreads_desc"] = give_text_format(good_reads_desc)
+    doc["wiki_desc"] = give_text_format(wiki_desc)
+    doc["riffle_desc"] = give_text_format(riffle_desc)
+    doc["amazon_desc"] = give_text_format(amazon_desc)
+    doc["readgeek_desc"] = give_text_format(read_geek_desc)
     doc["genre_dissect"] = genre_dict
 
     books_collection.insert_one(doc)
