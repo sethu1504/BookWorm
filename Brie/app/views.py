@@ -5,6 +5,8 @@ import re
 from pymongo import MongoClient
 from collections import defaultdict
 import math
+import plotly.graph_objs as go
+import plotly.offline as opy
 
 mongo_client = MongoClient('mongodb://sethu:sethu123@localhost:27017/Brie')
 mongo_brie_db = mongo_client.Brie
@@ -46,13 +48,42 @@ def search_result(request):
 def book_view(request, book_id):
     book = books_collection.find_one({"id": book_id})
 
+    # context = dict()
+    # context["title"] = book["title"]
+    # context["author"] = book["author"]
+    # context["pages"] = book["pages"]
+    # context["ID"] = book_id
+    # context["publication"] = book["publication"]
+    # return render(request, 'app/book_view.html', context)
+
+    book = books_collection.find_one({"id": book_id})
     context = dict()
     context["title"] = book["title"]
     context["author"] = book["author"]
     context["pages"] = book["pages"]
     context["ID"] = book_id
     context["publication"] = book["publication"]
+    genres_dict = book["genre_dissect"]
+    genres_lst = []
+    genres_percent = []
+    for key, value in genres_dict.items():
+        genres_lst.append(key.title())
+        genres_percent.append(value)
+
+    colors = ['#ff598f', '#fd8a5e', '#e0e300', '#01dddd']
+    trace = go.Pie(labels=genres_lst, values=genres_percent,
+                   marker=dict(colors=colors))  # marker=dict(colors=colors, line=dict(color='#000000', width=1)
+    data = go.Data([trace])
+    layout = go.Layout(title="B.R.I.E's Genre Dissection", height=500, width=500,
+                       autosize=False)
+    figure = go.Figure(data=data, layout=layout)
+    div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False}, show_link=False)
+    context["chart"] = div
     return render(request, 'app/book_view.html', context)
+
+
+
+
 
 
 def overview(request):
