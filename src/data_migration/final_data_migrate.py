@@ -51,22 +51,25 @@ for index, row in books_data.iterrows():
     if type(image) is float:
         image = ""
 
-    gp_price = row["Google Play"]
+    gp_price = float(row["Google Play"])
     gp_url = row["Google Play URL"]
     if type(gp_url) is float:
         gp_url = ""
 
-    bnb_price = row["Barnes and Noble"]
+    bnb_price = float(row["Barnes and Noble"])
     bnb_url = row["Barnes and Noble URL"]
     if type(bnb_url) is float:
         bnb_url = ""
 
-    indie_price = row["Indie Bound"]
+    indie_price = float(row["Indie Bound"])
     indie_url = row["Indie Bound URL"]
     if type(indie_url) is float:
         indie_url = ""
 
-    amazon_price = row["Amazon"]
+    try:
+        amazon_price = float(row["Amazon"])
+    except ValueError:
+        amazon_price = -1
     amazon_url = row["Amazon URL"]
     if type(amazon_url) is float:
         amazon_url = ""
@@ -146,7 +149,7 @@ for index, row in books_data.iterrows():
     doc["isbn"] = isbn
     doc["rating"] = rating
     doc["author"] = author
-    doc["pages"] = pages
+    doc["pages"] = int(pages)
     doc["language"] = language
     doc["publication"] = publication
     doc["pub_date"] = pub_date
