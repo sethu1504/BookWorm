@@ -253,7 +253,7 @@ def publishers(request):
     )
 
     data = [trace]
-    layout = go.Layout(title="<b>Average Rating of Popular Publishers</b>", height=550, width=600,
+    layout = go.Layout(title="<b>Average Book Rating of Popular Publishers</b>", height=550, width=600,
                        autosize=False)
     figure = go.Figure(data=data, layout=layout)
     pub_by_rating_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
@@ -312,7 +312,210 @@ def recommendation(request):
 
 
 def authors(request):
-    return render(request, 'app/authors.html')
+    context = dict()
+
+    # Top Publishers by number of books
+    authors_by_books = books_collection.aggregate([{"$group": {"_id": "$author", "count": {"$sum": 1}}},
+                                                   {"$sort": {"count": -1}}, {"$limit": 16}])
+
+    author_names = []
+    book_count = []
+    for auth_book_agg in authors_by_books:
+        auth_name = auth_book_agg["_id"]
+        if auth_name == "":
+            continue
+        author_names.append(auth_name)
+        book_count.append(auth_book_agg["count"])
+
+    authors_by_book_div = plotly.offline.plot({"data": [Bar(x=author_names, y=book_count,
+                                                        marker=dict(color='rgb(135,195,132)'))],
+                                               'layout': Layout(title='<b>Top Authors by Books</b>',
+                                                                yaxis=dict(title='Number of Books'))},
+                                              output_type="div", include_plotlyjs=False, link_text="",
+                                              show_link="False")
+
+    context["authors_by_book_div"] = authors_by_book_div
+
+    # Top Authors by years
+    start_year = 1850
+    end_year = start_year + 10
+    i = 0
+    year_labels = []
+    author_names_by_year = []
+    while end_year <= 2020:
+        author_by_books_by_year = books_collection.aggregate([{"$match": {"pub_year": {"$gte": start_year,
+                                                                                       "$lt": end_year}}},
+                                                              {"$group": {"_id": "$author",
+                                                                          "count": {"$sum": 1}}},
+                                                              {"$sort": {"count": -1}}, {"$limit": 2}])
+
+        for author in author_by_books_by_year:
+            if author["_id"] == '':
+                continue
+            year_labels.append(str(start_year) + " - " + str(end_year))
+            author_names_by_year.append(author["_id"])
+            i += 1
+            break
+        end_year += 10
+        start_year += 10
+
+    trace = go.Table(
+        header=dict(values=[['Decades'], ['Top Author']],
+                    line=dict(color='black'),
+                    fill=dict(color='#a1c3d1')
+                    ),
+        cells=dict(values=[year_labels,
+                           author_names_by_year],
+                   line=dict(color='black'))
+    )
+
+    data = [trace]
+    layout = go.Layout(title="<b>Popular Authors every Decade by Production</b>", height=550, width=600,
+                       autosize=False)
+    figure = go.Figure(data=data, layout=layout)
+    authors_by_year_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
+                                   show_link=False)
+
+    context["authors_by_year_div"] = authors_by_year_div
+
+    # Bestselling Authors by Price
+    bestsellers_authors = ["J.K. Rowling", "Dan Brown", "Julia Donaldson", "James Patterson", "Jacqueline Wilson",
+                           "Terry Pratchett", "John Grisham", "Stephenie Meyer", "Martina Cole"]
+
+    bestsellers_value = np.array([209.72, 89.43, 84.23, 86.53, 81.94, 79.06, 71.11, 57.48, 54.41])
+    bestsellers_value = bestsellers_value/100
+
+    websites = ["amazon_price", "barnes_and_noble_price", "indie_price", "google_play_price"]
+    website_price_dict = dict()
+    for website in websites:
+        results = books_collection.aggregate([{"$match": {"$and": [{website: {"$gt": 0, "$lte": 100}},
+                                                                   {"author": {"$in": bestsellers_authors}}]}},
+                                              {"$group": {"_id": "$author", "avgPrice": {"$avg": "$" + website}}}])
+
+        price_list_for_authors = []
+        for row in results:
+            price_list_for_authors.append(row["avgPrice"])
+
+        website_price_dict[website] = price_list_for_authors
+
+    auth_book_count = []
+    for author in bestsellers_authors:
+        supp_results = books_collection.aggregate([{"$match": {"author": author}},
+                                                   {"$group": {"_id": "$author", "count": {"$sum": 1}}}])
+
+        for res1 in supp_results:
+            auth_book_count.append(res1["count"])
+
+    trace1 = Bar(
+        x=bestsellers_authors,
+        y=auth_book_count,
+        name='Number of Books'
+    )
+    trace2 = Scatter(
+        x=bestsellers_authors,
+        y=website_price_dict["amazon_price"],
+        name='Amazon Price'
+    )
+    trace3 = Scatter(
+        x=bestsellers_authors,
+        y=website_price_dict["indie_price"],
+        name='Indie Bound Price'
+    )
+    trace4 = Scatter(
+        x=bestsellers_authors,
+        y=website_price_dict["barnes_and_noble_price"],
+        name='Barnes and Nobel Price'
+    )
+    trace5 = Scatter(
+        x=bestsellers_authors,
+        y=website_price_dict["google_play_price"],
+        name='Google Play Price'
+    )
+
+    mix_layout = Layout(title='<b>Books by Average Price for Bestselling Authors</b>')
+
+    mix_data = [trace1, trace2, trace3, trace4, trace5]
+    mig_fig = {'data': mix_data, 'layout': mix_layout}
+    mix_div = plotly.offline.plot(mig_fig, output_type="div", include_plotlyjs=False, link_text="", show_link="False")
+
+    context["books_by_avg_price_auth_div"] = mix_div
+
+    # Average Rating for BestSelling Authors
+
+    author_ratings = books_collection.aggregate([{"$match": {"author": {"$in": bestsellers_authors}}},
+                                                 {"$group": {"_id": "$author", "count": {"$sum": 1},
+                                                             "avgRating": {"$avg": "$rating"}}}])
+    ratings_for_author = []
+    for row in author_ratings:
+        rating = "%.2f" % row["avgRating"]
+        ratings_for_author.append(rating)
+
+    trace1 = Scatter(
+        x=bestsellers_authors,
+        y=bestsellers_value,
+        name='Value in 100 millions'
+    )
+    trace2 = Bar(
+        x=bestsellers_authors,
+        y=ratings_for_author,
+        name='Average Rating',
+        marker=dict(color='rgb(163, 163, 117)')
+    )
+
+    mix_layout = Layout(title='<b>Comparison of Bestselling Authors</b>')
+
+    mix_data = [trace1, trace2]
+    mig_fig = {'data': mix_data, 'layout': mix_layout}
+    mix_div = plotly.offline.plot(mig_fig, output_type="div", include_plotlyjs=False, link_text="", show_link="False")
+
+    context["bestsellers_rating_div"] = mix_div
+
+    # Publishers to Authors
+
+    results = books_collection.aggregate([{"$group": {"_id": {"author": '$author'},
+                                                      "publications": {"$addToSet": '$publication'}}},
+                                          {"$unwind": "$publications"},
+                                          {"$group": {"_id": "$_id", "publicationCount": {"$sum": 1}}},
+                                          {"$sort": {"publicationCount": -1}}, {"$limit": 11}])
+
+    auth_for_pub = []
+    auth_pub_count = []
+    pub_book_count = []
+    for row in results:
+        author = row["_id"]["author"]
+        if author == "":
+            continue
+        auth_for_pub.append(author)
+        auth_pub_count.append(row["publicationCount"])
+        supp_results = books_collection.aggregate([{"$match": {"author": author}},
+                                                   {"$group": {"_id": "$author", "count": {"$sum": 1}}}])
+
+        for res1 in supp_results:
+            pub_book_count.append(res1["count"])
+
+    trace1 = Scatter(
+        x=auth_for_pub,
+        y=pub_book_count,
+        name='Books Published',
+        marker=dict(color='rgb(255, 102, 102)')
+    )
+    trace2 = Bar(
+        x=auth_for_pub,
+        y=auth_pub_count,
+        name='Publications associated',
+        marker=dict(color='rgb(117, 117, 163)')
+    )
+
+    mix_layout = Layout(title='<b>Books Published and Unique Publications Involved</b>',
+                        yaxis=dict(title='Number of Books & Publications'))
+
+    mix_data = [trace1, trace2]
+    mig_fig = {'data': mix_data, 'layout': mix_layout}
+    mix_div = plotly.offline.plot(mig_fig, output_type="div", include_plotlyjs=False, link_text="", show_link="False")
+
+    context["books_pub_author_div"] = mix_div
+
+    return render(request, 'app/authors.html', context)
 
 
 def evaluation(request):

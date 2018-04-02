@@ -16,6 +16,7 @@
   <link href="../../static/basic_frame/vendor/datatables/dataTables.bootstrap4.css" rel="stylesheet">
   <!-- Custom styles for this template-->
   <link href="../../static/basic_frame/css/sb-admin.css" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 
 <body class="fixed-nav sticky-footer" id="page-top">
@@ -70,8 +71,35 @@
   </nav>
   <div class="content-wrapper">
     <div class="container-fluid">
-      
+      <h1>Author Based Reports</h1>
+      <div>
+        {{ authors_by_book_div|safe }}
       </div>
+      <div>
+        {{books_pub_author_div|safe}}
+      </div>
+      <br>
+      <div class="row">
+        <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+          {{ authors_by_year_div|safe }}
+        </div>
+        <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+          {{ bestsellers_rating_div|safe }}
+        </div>
+      </div>
+      <br>
+      <div>
+        {{books_by_avg_price_auth_div|safe}}
+      </div>
+      <div class="row">
+        <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+          {{books_by_avg_price_auth_div|safe}}
+        </div>
+        <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+        </div>
+      </div>
+      </div>
+    </div>
     </div>
     <a class="scroll-to-top rounded" href="#page-top">
       <i class="fa fa-angle-up"></i>
