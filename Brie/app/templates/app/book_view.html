@@ -74,13 +74,14 @@
     </div>
   </nav>
   <div class="content-wrapper">
+    <div class="container-fluid">
         {% if image != "" %}
         <img class="book_image", src="{{image|safe}}", alt="book_image">
         {% else %}
         <img class="book_image", src="../../static/img/default_book.jpg", alt="default_book_image">
         {% endif %}
 
-    <div class="container-fluid">
+
         <div>
 
         {% if title%}
@@ -94,25 +95,17 @@
         <h5 id="book_author_h5">By {{author|safe}} | {{publication|safe}} ({{pages|safe}} Pages)</h5>
         {% endif %}
         </div>
-
-        <div style="width:200;height:200", id = "genre_dissection">
-            {% if chart %}
-            {{chart|safe}}
-            {% endif %}
-        </div>
-
-        <div id ="all_price">
-            <h6 id = "price_h6">Buy this book from</h6>
+        <br>
+        <div id = "desc">
             {% if goodreads_desc %}
             {{goodreads_desc|safe}}
             {% endif %}
+        </div>
+        <br>
+        <h5 class = "h5_message">Buy this book from</h5>
+        <div id ="all_price">
 
-
-
-
-
-
-            <table border="1", align="centre">
+            <table align="centre">
 
                 <tr>
                   {% if amazon_price  != "-1"%}
@@ -169,7 +162,6 @@
                   {% endif %}
 
 
-
                   {% if indie_price %}
                   {% if indie_url %}
                 <td>
@@ -192,10 +184,11 @@
             </table>
 
         </div>
+    <br>
+    <br>
+    <h5 class = "h5_message"> Other books you might like! </h5>
 
-    <h5> Other books you might like! </h5>
-
-
+    <div id="recommendation">
 
       {% for i in similar_books %}
         <div id="foo">
@@ -207,14 +200,11 @@
                 <img class="sim_book_image", src="{{i.image|safe}}", alt="book_image">
                 </a>
 
-
                 {% else %}
                 <a href="../{{i.id|safe}}">
                 <img class="sim_book_image", src="../../static/img/default_book.jpg", alt="default_book_image">
                 </a>
                 {% endif %}
-
-
 
                 <a href="../{{i.id|safe}}">
                 <h6 class="sim_book_title">
@@ -222,13 +212,20 @@
                 </h6>
                 </a>
 
-
-
             </div>
         </div>
-      {% endfor %}
+        {% endfor %}
+    </div>
+      <br>
+    <div class="charts">
+        <h2 style="font-family: 'Montserrat','Helvetica Neue';"><center>Analytics</center></h2>
+      {% if chart %}
+      <div id = "genre_dissection">
 
-
+        {{chart|safe}}
+       </div>
+      {% endif %}
+    </div>
 
     <a class="scroll-to-top rounded" href="#page-top">
       <i class="fa fa-angle-up"></i>
@@ -248,6 +245,7 @@
     <!-- Custom scripts for this page-->
     <script src="../../static/basic_frame/js/sb-admin-datatables.min.js"></script>
     <script src="../../static/basic_frame/js/sb-admin-charts.min.js"></script>
+  </div>
   </div>
 </body>
 
