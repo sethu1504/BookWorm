@@ -16,6 +16,7 @@ mongo_brie_db = mongo_client.Brie
 
 books_collection = mongo_brie_db.Books
 similar_books_collection = mongo_brie_db.Books_Similar
+goodreads_description = mongo_brie_db.Books_GoodReads
 
 
 def index(request):
@@ -49,7 +50,6 @@ def search_result(request):
 
 
 def book_view(request, book_id):
-    book = books_collection.find_one({"id": book_id})
 
     # context = dict()
     # context["title"] = book["title"]
@@ -60,13 +60,41 @@ def book_view(request, book_id):
     # return render(request, 'app/book_view.html', context)
 
     book = books_collection.find_one({"id": book_id})
+    book_similar = similar_books_collection.find_one({"Id": book_id})
+    book_goodreads_desc = goodreads_description.find_one({"id": book_id})
+
     context = dict()
     context["title"] = book["title"]
     context["author"] = book["author"]
     context["pages"] = book["pages"]
     context["ID"] = book_id
     context["publication"] = book["publication"]
+    context["image"] = book["image"]
+    context["indie_price"] = book["indie_price"]
+    context["indie_url"] = book["indie_url"]
+
+    context["google_play_url"] = book["google_play_url"]
+    context["google_play_price"] = book["google_play_price"]
+
+    context["barnes_and_noble_price"] = book["barnes_and_noble_price"]
+    context["barnes_and_noble_url"] = book["barnes_and_noble_url"]
+
+    context["amazon_price"] = book["amazon_price"]
+    context["amazon_url"] = book["amazon_url"]
+
+    context["goodreads_desc"] = book_goodreads_desc["goodreads_desc"]
+
     genres_dict = book["genre_dissect"]
+
+    sim_list = []
+
+    for i in range(1, 11):
+        similar_book = books_collection.find_one({"id": book_similar["SIM" + str(i)]})
+        sim_list.append(similar_book)
+
+    context["similar_books"] = sim_list
+    #------Charts-------
+
     genres_lst = []
     genres_percent = []
     for key, value in genres_dict.items():
