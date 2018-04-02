@@ -3,12 +3,13 @@ from django.shortcuts import render
 import json
 import re
 from pymongo import MongoClient
-from collections import defaultdict
 import math
-import plotly
 import plotly.graph_objs as go
 import plotly.offline as opy
-from plotly.graph_objs import Layout, Bar, Scatter
+from collections import defaultdict
+from collections import Counter
+import plotly.plotly
+from plotly.graph_objs import Bar, Scatter, Layout
 import numpy as np
 
 mongo_client = MongoClient('mongodb://sethu:sethu123@localhost:27017/Brie')
@@ -114,11 +115,360 @@ def book_view(request, book_id):
 
 
 def overview(request):
-    return render(request, 'app/overview.html')
+
+    context = dict()
+    popular_books = books_collection.find()  # {"rating": {"$gte": 3}}
+    genre_count = dict()
+    genre_count = defaultdict(lambda: dict(), genre_count)
+
+    genres_dict = dict()
+    genres_dict = defaultdict(lambda: list(), genres_dict)
+
+    decade_dct = dict()
+    decade_dct = defaultdict(lambda: list(), decade_dct)
+
+    overall_genres = list()
+    years_lst = [1800, 1870, 1960, 2000, 2010]
+
+    overall_prices = dict()
+    overall_prices = defaultdict(lambda: 0, overall_prices)
+
+    chart_labels = ['1800 - 1870', '1870 - 1960', '1960 - 2000', '2000 - 2010', '2010 - 2020']
+
+    chart_labels_dict = dict()
+    chart_labels_dict = defaultdict(lambda: list(), chart_labels_dict)
+
+    for i in range(len(chart_labels)):
+        chart_labels_dict[years_lst[i]] = chart_labels[i]
+
+
+    number_of_pages_values = []
+
+    book_languages_dict = dict()
+    book_languages_dict = defaultdict(lambda: list(), book_languages_dict)
+
+    all_language_lst = []
+
+    language_count_dict = dict()
+    # decade_dct = {}
+    # for year in years_lst:
+    #     decade_dct[year] = list()
+
+    #months_dct = {}
+    #for i in range(12):
+
+
+    # all books are in their respective decades by the end of this for loop
+    for book in popular_books:
+        publish_year = book['pub_year']
+        if publish_year is None or publish_year == "" or str(publish_year).isspace():
+            id = book['id'][0]
+            if id == str(1):
+                publish_year = 2000
+            elif id == str(2):
+                publish_year = 2010
+            elif id == str(3):
+                publish_year = 1960
+            elif id == str(4):
+                publish_year = 1870
+            elif id == str(5):
+                publish_year = 1800
+
+        if 1800 <= publish_year < 1870:
+            year = 1800
+        elif 1870 <= publish_year < 1960:
+            year = 1870
+        elif 1960 <= publish_year < 2000:
+            year = 1960
+        elif 2000 <= publish_year < 2010:
+            year = 2000
+        elif 2010 <= publish_year < 2020:
+            year = 2010
+        decade_dct[year].append(book)
+
+    #book_count = 0
+
+    for year, book in decade_dct.items():
+        book_counter_per_yrange = 0
+        pages_counter_per_yrange = 0
+        for item in book:
+
+            #genre-related
+            if len(item["genres"]) == 0 or item["genres"][0] == "":
+                genre_dissect = item["genre_dissect"]
+                if (len(genre_dissect)) == 0:
+                    continue
+                else:
+                    gen = sorted(genre_dissect.items(), key=lambda x: x[1], reverse=True)
+                    popular_genre = gen[0][0]
+            else:
+                for good_genre in item["genres"]:
+                    # fiction is too generalizing
+                    if good_genre.lower() != "fiction":
+                        popular_genre = good_genre
+                        break
+                    else:
+                        continue
+            genres_dict[year].append(popular_genre)
+            overall_genres.append(popular_genre)
+
+            # price-related per genre
+            price_sum = 0
+            if 1 <= item["google_play_price"] <= 100:
+                price_sum += item["google_play_price"]
+            if 1 <= item["barnes_and_noble_price"] <= 100:
+                price_sum += item["barnes_and_noble_price"]
+            if 1 <= item["indie_price"] <= 100:
+                price_sum += item["indie_price"]
+            if 1 <= item["amazon_price"] <= 100:
+                price_sum += item["amazon_price"]
+            overall_prices[popular_genre] += price_sum
+
+            # #-pages
+            pages_counter_per_yrange += item["pages"]
+            book_counter_per_yrange += 1
+
+            # #-books/language
+            language = item["language"]
+            if language == "":
+                language = "Unspecified"
+            if(language!="Unspecified"): #removing unspecified
+                book_languages_dict[year].append(language)
+                all_language_lst.append(language)
+
+        number_of_pages_values.append(round(pages_counter_per_yrange / book_counter_per_yrange, 2))
+
+    # chart-1: popular genre by decade
+    for year, genres in genres_dict.items():
+        genre_count[year] = dict(Counter(genres))
+
+
+    chart_values = []
+    for (key, val) in genre_count.items():
+        v = sorted(val.items(), key=lambda x: x[1], reverse=True)
+        genre_count[key] = (v[0][0], '<br>', v[1][0],'<br>', v[2][0])
+        genre_count[key] = ''.join(genre_count[key])
+        chart_values.append(genre_count[key])
+
+    trace = go.Table(header=dict(values=[['Years'], ['<b>Top 3 Genres per Range</b>']],
+                                 line=dict(color='black'),
+                                 fill=dict(color='#FE4511')),
+                     cells=dict(values=[chart_labels, chart_values],
+                                line=dict(color='black')))
+
+    data = [trace]
+    layout = go.Layout(title="<b>Top 3 Genres per Year Range</b>", height=800, width=700,
+                       autosize=False, font=dict( size=17) )
+    figure = go.Figure(data=data, layout=layout)
+    genres_by_year_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
+                                  show_link=False)
+
+    context["genres_by_year_div"] = genres_by_year_div
+
+    # chart-2: top-most genre among all books that we have
+    top_most_genres = dict(Counter(overall_genres))
+    top_most_genres_sorted_all = sorted(top_most_genres.items(), key=lambda x: x[1], reverse=True)
+    top_most_genres_sorted = top_most_genres_sorted_all[0:10]
+
+    genre_sum = 0
+    for genre in top_most_genres_sorted:
+        genre_sum += genre[1]
+
+    genre_labels = []
+    genre_values = []
+    for genre in top_most_genres_sorted:
+        genre_labels.append(genre[0])
+        temp = genre[1]# / genre_sum #normalization
+        genre_values.append(temp)
+
+    # data = [go.Bar(
+    #     x=genre_labels,
+    #     y=genre_values,
+    #     xaxis = dict(title = "Number of Books")
+    # )]
+
+    trace = go.Bar(
+        x=genre_labels,
+        y=genre_values,
+        name='Number of Books',
+        marker=dict(color='rgb(49,130,189)'))
+
+    data = [trace]
+    layout = go.Layout( title="<b>Top-10 Genres in Our Collection</b>", height=550, width=1100,
+                       autosize=False, yaxis=dict(title='Number of Books'),
+                        xaxis=dict(title='Genres'), font=dict( size=15))
+
+    #layout = go.Layout()
+    figure = go.Figure(data=data, layout=layout)
+    most_popular_genres_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
+                                       show_link=False)
+    context["most_popular_genres_div"] = most_popular_genres_div
+
+    # chart-6: Languages of all the books that we have
+
+    # chart-3: price per genre
+
+    top_most_genres_dict = dict(top_most_genres_sorted_all) #has books, number
+    price_labels = []
+    price_values = []
+
+    overall_prices_sorted = sorted(overall_prices.items(), key=lambda x: x[1], reverse=True)
+    for item in overall_prices_sorted:
+        count = top_most_genres_dict[item[0]]
+        price_labels.append(item[0])
+        price_values.append(item[1]/count)
+
+    price_labels = price_labels[0:10]
+    price_values = price_values[0:10]
+
+    trace = go.Bar(x=price_labels, y=price_values, hoverinfo='label+percent',
+                   marker=dict(
+                       color=['#ff598f', '#fd8a5e', '#e0e300', '#01dddd',
+                              '#ff598f', '#fd8a5e', '#e0e300', '#01dddd',
+                              '#ff598f', '#fd8a5e', '#e0e300', '#01dddd'
+                              ]))
+
+    data = go.Data([trace])
+    layout = go.Layout(title="<b>Average Book-Price per Genre</b>", height=500, width=1100,
+                       autosize=False, font=dict( size=15) , yaxis=dict(title='Price of Books'),
+                        xaxis=dict(title='Genres'))
+    figure = go.Figure(data=data, layout=layout)
+    most_priciest_genres_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
+                                        show_link=False)
+    context["most_priciest_genres_div"] = most_priciest_genres_div
+
+    # chart-4: wordcloud - popular word by decade
+
+
+    # chart-5: Average number of pages by year-range
+
+    #trace = go.Bar(x=chart_labels, y=number_of_pages_values, )
+                   # marker=dict(
+                   #     color=['#ff598f', '#fd8a5e', '#e0e300', '#01dddd', '#00ffc5',
+                   #            '#ff598f', '#fd8a5e', '#e0e300', '#01dddd',
+                   #            '#ff598f', '#fd8a5e', '#e0e300', '#01dddd'
+                   #            ]))
+
+                # yaxis=dict(range=[0, 400]), yaxis=dict(
+                #        domain=[0, 400],
+                #        nticks = 12
+
+    trace = go.Scatter(
+        x=chart_labels,
+        y=number_of_pages_values, mode="lines+markers+text", text=number_of_pages_values, textposition = "top",
+         connectgaps=True, hoverinfo='label+percent'
+    )
+
+
+    data = go.Data([trace])
+    layout = go.Layout(title="Average #Pages per Year Range", height=500, width=1100,
+                       autosize=False , font=dict( size=15),
+                       yaxis=dict(title='Number of Pages', range=[0, 460]),
+                       xaxis=dict(title='Years')
+                       )
+    figure = go.Figure(data=data, layout=layout)
+    avg_pages_per_yrange_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
+                                        show_link=False)
+    context["avg_pages_per_yrange_div"] = avg_pages_per_yrange_div
+
+
+    #chart-6: #Books per language
+
+    for year, lang in book_languages_dict.items():
+        language_count_dict[year] = dict(Counter(lang))
+
+    print(language_count_dict)
+
+    data = []
+    for year, langs in language_count_dict.items():
+        temp_dict = dict(sorted(langs.items(), key=lambda x: x[1], reverse=True)[0:5])
+        #print("year:", year, "val:", temp_dict)
+    #     names = list(temp_dict.keys()) #languages
+    #     counts = list(temp_dict.values()) #counts
+    #
+    #     trace = go.Bar(x= chart_labels, y= counts, name = names)
+    #     data.append(trace)
+    #
+    # layout = go.Layout(barmode='stack')
+    #
+    # fig = go.Figure(data=data, layout=layout)
+    # languages_per_yrange_div = opy.plot(fig, auto_open=False, output_type='div', config={"displayModeBar": False},
+    #                                     show_link=False)
+    # context["languages_per_yrange_div"] = languages_per_yrange_div
+
+
+    #language_count_lst_sorted = sorted(top_most_genres.items(), key=lambda x: x[1], reverse=True)
+    #print("checktype:",language_count_lst_sorted)
+
+    # for year, lang in language_count_lst_sorted:
+    #
+    #
+    #
+    #
+    # data = []
+    # ctr = 0
+    # for i in language_count_lst_sorted:
+    #     trace = go.Bar(
+    #     x= chart_labels[ctr]
+    #     y= i.values()
+    #     name='SF Zoo'
+    # )
+    # trace2 = go.Bar(
+    #     x=['giraffes', 'orangutans', 'monkeys'],
+    #     y=[12, 18, 29],
+    #     name='LA Zoo'
+    # )
+    #
+    # data = [trace1, trace2]
+    # layout = go.Layout(
+    #     barmode='stack'
+    # )
+    #
+    # fig = go.Figure(data=data, layout=layout)
+    # py.iplot(fig, filename='stacked-bar')
+
+
+    # languages_labels = []
+    # language_counts = []
+    #
+    #
+    # book_languages_dict = dict(sorted(book_languages_dict.items(), key=lambda x: x[1], reverse=True)[0:10])
+    #
+    # for language, bk_count in book_languages_dict.items():
+    #     languages_labels.append(language)
+    #     language_counts.append(bk_count)
+    #
+    # trace = go.Bar(x=languages_labels, y=language_counts, hoverinfo='label+percent',
+    #                marker=dict(
+    #                    color=['#ff598f', '#fd8a5e', '#e0e300', '#01dddd',
+    #                           '#ff598f', '#fd8a5e', '#e0e300', '#01dddd',
+    #                           '#ff598f', '#fd8a5e', '#e0e300', '#01dddd'
+    #                           ]))
+    #
+    # data = go.Data([trace])
+    # layout = go.Layout(title="<b>#Books per Language</b>", height=500, width=500,
+    #                    autosize=False)
+    # figure = go.Figure(data=data, layout=layout)
+    # bk_languages_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
+    #                                     show_link=False)
+    # context["bk_languages_div"] = bk_languages_div
+
+
+
+
+
+    #chart-7: Number of books by month
+
+
+    #chart-8: Pages vs Price of books per year_range
+
+
+    return render(request, 'app/overview.html', context)
+
+
 
 
 def publishers(request):
-
     # Top Publishers by number of books
     publishers_by_books = books_collection.aggregate([{"$group": {"_id": "$publication", "count": {"$sum": 1}}},
                                                       {"$sort": {"count": -1}}, {"$limit": 16}])

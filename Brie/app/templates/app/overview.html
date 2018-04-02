@@ -65,18 +65,64 @@
           </a>
         </li>
       </ul>
-      
+
     </div>
   </nav>
   <div class="content-wrapper">
     <div class="container-fluid">
-      
-      </div>
+      An Overview of Book Results
+        <div>
+             {% if most_popular_genres_div %}
+                <div >
+                  <center>
+                {{most_popular_genres_div|safe}}
+                    </center>
+                </div>
+                {% endif %}
+
+             {% if genres_by_year_div %}
+                <div >
+                    <center>
+                {{genres_by_year_div|safe}}
+                   </center>
+                </div>
+                {% endif %}
+
+            {% if most_priciest_genres_div %}
+                <div >
+                   <center>
+                {{most_priciest_genres_div|safe}}
+                      </center>
+                </div>
+                {% endif %}
+
+
+            {% if avg_pages_per_yrange_div %}
+                <div >
+                   <center>
+                {{avg_pages_per_yrange_div|safe}}
+                      </center>
+                </div>
+                {% endif %}
+
+
+          <br/><br/>
+
+
+
+        </div>
     </div>
+      <div>
+
+
+
+      </div>
+
+
     <a class="scroll-to-top rounded" href="#page-top">
       <i class="fa fa-angle-up"></i>
     </a>
-    <!-- Logout Modal-->
+    <!-- Logout Modal-- style="width:300px;height:2000px;margin-right:100px;float:left">
     <!-- Bootstrap core JavaScript-->
     <script src="../../static/basic_frame/vendor/jquery/jquery.min.js"></script>
     <script src="../../static/basic_frame/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
