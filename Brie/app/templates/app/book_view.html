@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="utf-8">
+  <link rel="stylesheet" href="style.css" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <meta name="description" content="">
@@ -16,7 +17,9 @@
   <link href="../../static/basic_frame/vendor/datatables/dataTables.bootstrap4.css" rel="stylesheet">
   <!-- Custom styles for this template-->
   <link href="../../static/basic_frame/css/sb-admin.css" rel="stylesheet">
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <link href="../../static/basic_frame/css/style.css" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
 </head>
 
 <body class="fixed-nav sticky-footer" id="page-top">
@@ -44,6 +47,7 @@
           </a>
         </li>
         <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Components">
+        <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Components">
           <a class="nav-link" href="/brie/authors">
             <span class="nav-link-text">Authors</span>
           </a>
@@ -70,24 +74,162 @@
     </div>
   </nav>
   <div class="content-wrapper">
-    <div class="container-fluid" >
-        <div class="chart-main" style="width:170px;height:170px;margin-left:15px;">
+        {% if image != "" %}
+        <img class="book_image", src="{{image|safe}}", alt="book_image">
+        {% else %}
+        <img class="book_image", src="../../static/img/default_book.jpg", alt="default_book_image">
+        {% endif %}
 
-        {% if chart %}
-        <div style="width:600;height:500">
-        {{chart|safe}}
+    <div class="container-fluid">
+        <div>
+
+        {% if title%}
+        <h3 id="book_title_h3">{{title|safe}}</h3>
+        {% endif %}
+
         </div>
+
+        <div>
+        {% if author%}
+        <h5 id="book_author_h5">By {{author|safe}} | {{publication|safe}} ({{pages|safe}} Pages)</h5>
         {% endif %}
         </div>
 
-        <div class="text-main" style="width:300px;height:2000px;margin-right:100px;float:right;">
-            Text messaging, or texting, is the act of composing and sending electronic messages, typically consisting of alphabetic and numeric characters, between two or more users of mobile phones, tablets, desktops/laptops, or other devices. Text messages may be sent over a cellular network, or may also be sent via an Internet connection.
+        <div style="width:200;height:200", id = "genre_dissection">
+            {% if chart %}
+            {{chart|safe}}
+            {% endif %}
+        </div>
 
-The term originally referred to messages sent using the Short Message Service (SMS). It has grown beyond alphanumeric text to include multimedia messages (known as MMS) containing digital images, videos, and sound content, as well as ideograms known as emoji (happy faces, sad faces, and other icons).  As of 2017, text messages are used by youth and adults for personal, family and social purposes and in business. Governmental and non-governmental organizations use text messaging for communication between colleagues. As with emailing, in the 2010s, the sending of short informal messages has become an accepted part of many cultures.[1] This makes texting a quick and easy way to communicate with friends and colleagues, including in contexts where a call would be impolite or inappropriate (e.g., calling very late at night or when one knows the other person is busy with family or work activities). Like e-mail and voice mail, and unlike calls (in which the caller hopes to speak directly with the recipient), texting does not require the caller and recipient to both be free at the same moment; this permits communication even between busy individuals. Text messages can also be used to interact with automated systems, for example, to order products or services from e-commerce websites, or to participate in online contests. Advertisers and service providers use direct text marketing to send messages to mobile users about promotions, payment due dates, and other notifications instead of using postal mail, email, or voicemail.
+        <div id ="all_price">
+            <h6 id = "price_h6">Buy this book from</h6>
+            {% if goodreads_desc %}
+            {{goodreads_desc|safe}}
+            {% endif %}
+
+
+
+
+
+
+            <table border="1", align="centre">
+
+                <tr>
+                  {% if amazon_price  != "-1"%}
+                  {% if amazon_url %}
+                    <td>
+                        <a href="{{amazon_url|safe}}"><img id="amazon_logo", src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Amazon_logo_plain.svg/2000px-Amazon_logo_plain.svg.png"></a>
+                    </td>
+                  {% endif %}
+                  {% endif %}
+
+                    <td>
+                  {% if barnes_and_noble_price %}
+                  {% if barnes_and_noble_url %}
+                        <a href="{{barnes_and_noble_url|safe}}"><img id="barnes_logo", src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Barnes_and_Noble_logo.svg/2000px-Barnes_and_Noble_logo.svg.png"></a>
+                    </td>
+                  {% endif %}
+                  {% endif %}
+
+                    <td>
+                  {% if indie_price %}
+                  {% if indie_url %}
+                        <a href="{{indie_url|safe}}"><img id="indie_logo", src="http://3u5tts1uxf4t2zylbl2bpy2w.wpengine.netdna-cdn.com/wp-content/uploads/2014/11/indiebound.png"></a>
+                    </td>
+                  {% endif %}
+                  {% endif %}
+
+                    <td>
+                  {% if google_play_price %}
+                  {% if google_play_url %}
+                        <a href="{{google_play_url|safe}}"><img id="google_logo", src="https://techaeris.com/wp-content/uploads/2016/07/Google-Play-Books-FI.jpg"></a>
+                    </td>
+                  {% endif %}
+                  {% endif %}
+
+
+                </tr>
+
+                <tr>
+                  {% if amazon_price  != "-1"%}
+                  {% if amazon_url %}
+                <td>
+                    <a href="{{amazon_url|safe}}", class="price">${{amazon_price|safe}}</a>
+                </td>
+                  {% endif %}
+                  {% endif %}
+
+
+                  {% if barnes_and_noble_price %}
+                  {% if barnes_and_noble_url %}
+                <td>
+                    <a href="{{barnes_and_noble_url|safe}}", class="price">${{barnes_and_noble_price|safe}}</a>
+                </td>
+                  {% endif %}
+                  {% endif %}
+
+
+
+                  {% if indie_price %}
+                  {% if indie_url %}
+                <td>
+                    <a href="{{indie_url|safe}}", class="price">${{indie_price|safe}}</a>
+                </td>
+                  {% endif %}
+                  {% endif %}
+
+
+                  {% if google_play_price %}
+                  {% if google_play_url %}
+                <td>
+                    <a href="{{google_play_url|safe}}", class="price">${{google_play_price|safe}}</a>
+                </td>
+                  {% endif %}
+                  {% endif %}
+
+                </tr>
+
+            </table>
 
         </div>
-      </div>
-    </div>
+
+    <h5> Other books you might like! </h5>
+
+
+
+      {% for i in similar_books %}
+        <div id="foo">
+
+            <div class="bar">
+
+                {% if i.image != "" %}
+                <a href="../{{i.id|safe}}">
+                <img class="sim_book_image", src="{{i.image|safe}}", alt="book_image">
+                </a>
+
+
+                {% else %}
+                <a href="../{{i.id|safe}}">
+                <img class="sim_book_image", src="../../static/img/default_book.jpg", alt="default_book_image">
+                </a>
+                {% endif %}
+
+
+
+                <a href="../{{i.id|safe}}">
+                <h6 class="sim_book_title">
+                {{i.title|safe}}
+                </h6>
+                </a>
+
+
+
+            </div>
+        </div>
+      {% endfor %}
+
+
+
     <a class="scroll-to-top rounded" href="#page-top">
       <i class="fa fa-angle-up"></i>
     </a>
