@@ -8,8 +8,8 @@ import math
 import plotly
 import plotly.graph_objs as go
 import plotly.offline as opy
-from plotly.graph_objs import Scatter, Layout, Bar
-import pandas as pd
+from plotly.graph_objs import Layout, Bar, Scatter
+import numpy as np
 
 mongo_client = MongoClient('mongodb://sethu:sethu123@localhost:27017/Brie')
 mongo_brie_db = mongo_client.Brie
@@ -108,7 +108,8 @@ def publishers(request):
 
     pub_by_book_div = plotly.offline.plot({"data": [Bar(x=publisher_names, y=book_count,
                                                         marker=dict(color='rgb(135,195,132)'))],
-                                           'layout': Layout(title='<b>Top Publishers by Books</b>')},
+                                           'layout': Layout(title='<b>Top Publishers by Books</b>',
+                                                            yaxis=dict(title='Number of Books'))},
                                           output_type="div", include_plotlyjs=False, link_text="", show_link="False")
     context["pub_by_book_div"] = pub_by_book_div
 
@@ -128,7 +129,6 @@ def publishers(request):
         for publisher in publisher_by_books_by_year:
             if publisher["_id"] == '':
                 continue
-            print(publisher)
             year_labels.append(str(start_year) + " - " + str(end_year))
             publisher_names_by_year.append(publisher["_id"])
             i += 1
@@ -156,7 +156,153 @@ def publishers(request):
     context["pub_by_year_div"] = pub_by_year_div
 
     # Price of Books by Publishers
-    # for publisher in publisher_names:
+    websites = ["amazon_price", "barnes_and_noble_price", "indie_price", "google_play_price"]
+    website_price_dict = dict()
+    for website in websites:
+        results = books_collection.aggregate([{"$match": {"$and": [{website: {"$gt": 0, "$lte": 100}},
+                                                         {"publication": {"$in": publisher_names[0:5]}}]}},
+                                             {"$group": {"_id": "$publication", "avgPrice": {"$avg": "$" + website}}}])
+
+        price_list_for_publishers = []
+        for row in results:
+            price_list_for_publishers.append(row["avgPrice"])
+
+        website_price_dict[website] = price_list_for_publishers
+
+    book_count_np = np.array(book_count)
+    book_count_np = book_count_np/10
+
+    trace1 = Scatter(
+        x=publisher_names,
+        y=website_price_dict["amazon_price"],
+        name='Amazon Price'
+    )
+    trace2 = Bar(
+        x=publisher_names,
+        y=book_count_np[0:5],
+        name='Number of Books in 10s'
+    )
+    trace3 = Scatter(
+        x=publisher_names,
+        y=website_price_dict["indie_price"],
+        name='Indie Bound Price'
+    )
+    trace4 = Scatter(
+        x=publisher_names,
+        y=website_price_dict["barnes_and_noble_price"],
+        name='Barnes and Nobel Price'
+    )
+    trace5 = Scatter(
+        x=publisher_names,
+        y=website_price_dict["google_play_price"],
+        name='Google Play Price'
+    )
+
+    mix_layout = Layout(title='<b>Books by Average Price for Publishers</b>')
+
+    mix_data = [trace1, trace2, trace3, trace4, trace5]
+    mig_fig = {'data': mix_data, 'layout': mix_layout}
+    mix_div = plotly.offline.plot(mig_fig, output_type="div", include_plotlyjs=False, link_text="", show_link="False")
+
+    context["books_by_avg_price_pub_div"] = mix_div
+
+    # Publication by average pages
+    publishers_by_pages = books_collection.aggregate([{"$match": {"pages": {"$gt": 0}}},
+                                                      {"$group": {"_id": "$publication", "count": {"$sum": 1},
+                                                                  "avgPages": {"$avg": "$pages"}}},
+                                                      {"$sort": {"avgPages": -1}}])
+
+    pages = []
+    pub_pages = []
+
+    idx = 0
+    for row in publishers_by_pages:
+        if row["count"] <= 20 or row["_id"] == "":
+            continue
+        idx += 1
+        pages.append(row["avgPages"])
+        pub_pages.append(row["_id"])
+        if idx == 11:
+            break
+
+    pub_by_pages_div = plotly.offline.plot({"data": [Bar(x=pub_pages, y=pages,
+                                                         marker=dict(color='rgb(0,153,153)'))],
+                                            'layout': Layout(title='<b>Publishers by Average No.of Pages</b>',
+                                                             yaxis=dict(title='Number of Pages'))},
+                                           output_type="div", include_plotlyjs=False, link_text="", show_link="False")
+    context["pub_by_pages_div"] = pub_by_pages_div
+
+    # Average Rating by Publisher
+    publish_ratings = books_collection.aggregate([{"$match": {"publication": {"$in": publisher_names}}},
+                                                  {"$group": {"_id": "$publication", "count": {"$sum": 1},
+                                                              "avgRating": {"$avg": "$rating"}}},
+                                                  {"$sort": {"avgRating": -1}}])
+    ratings_for_publisher = []
+    for row in publish_ratings:
+        rating = "%.2f" % row["avgRating"]
+        ratings_for_publisher.append(rating)
+
+    trace = go.Table(
+        header=dict(values=[['Publisher'], ['Average Rating']],
+                    line=dict(color='black'),
+                    fill=dict(color='#ff80ff')
+                    ),
+        cells=dict(values=[publisher_names,
+                           ratings_for_publisher],
+                   line=dict(color='black'))
+    )
+
+    data = [trace]
+    layout = go.Layout(title="<b>Average Rating of Popular Publishers</b>", height=550, width=600,
+                       autosize=False)
+    figure = go.Figure(data=data, layout=layout)
+    pub_by_rating_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
+                                 show_link=False)
+
+    context["pub_by_rating_div"] = pub_by_rating_div
+
+    # Publishers to Authors
+
+    results = books_collection.aggregate([{"$group": {"_id": {"publication": '$publication'},
+                                           "authors": {"$addToSet": '$author'}}}, {"$unwind": "$authors"},
+                                           {"$group": {"_id": "$_id", "authorCount": {"$sum": 1}}},
+                                           {"$sort": {"authorCount": -1}}, {"$limit": 11}])
+
+    pub_for_authors = []
+    pub_authors_count = []
+    pub_book_count = []
+    for row in results:
+        publication = row["_id"]["publication"]
+        if publication == "":
+            continue
+        pub_for_authors.append(publication)
+        pub_authors_count.append(row["authorCount"])
+        supp_results = books_collection.aggregate([{"$match": {"publication": publication}},
+                                                   {"$group": {"_id": "$publication", "count": {"$sum": 1}}}])
+
+        for res1 in supp_results:
+            pub_book_count.append(res1["count"])
+
+    trace1 = Scatter(
+        x=pub_for_authors,
+        y=pub_book_count,
+        name='Books Published'
+    )
+    trace2 = Bar(
+        x=pub_for_authors,
+        y=pub_authors_count,
+        name='Authors associated',
+        marker=dict(color='rgb(163, 163, 117)')
+    )
+
+    mix_layout = Layout(title='<b>Books Published and Unique Authors Involved</b>',
+                        yaxis=dict(title='Number of Books & Authors'))
+
+    mix_data = [trace1, trace2]
+    mig_fig = {'data': mix_data, 'layout': mix_layout}
+    mix_div = plotly.offline.plot(mig_fig, output_type="div", include_plotlyjs=False, link_text="", show_link="False")
+
+    context["books_pub_author_div"] = mix_div
 
     return render(request, 'app/publishers.html', context)
 

@@ -71,17 +71,28 @@
   </nav>
   <div class="content-wrapper">
     <div class="container-fluid">
+      <h1>Publisher Based Reports</h1>
       <div>
         {{ pub_by_book_div|safe }}
       </div>
+      <br>
       <div class="row">
         <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
           {{ pub_by_year_div|safe }}
         </div>
         <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
-          
+          {{books_by_avg_price_pub_div|safe}}
         </div>
       </div>
+      <div class="row">
+      <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+          {{ pub_by_rating_div|safe }}
+        </div>
+      <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+          {{ pub_by_pages_div|safe }}
+        </div>
+      </div>
+      {{books_pub_author_div|safe}}
     </div>
     <a class="scroll-to-top rounded" href="#page-top">
       <i class="fa fa-angle-up"></i>
