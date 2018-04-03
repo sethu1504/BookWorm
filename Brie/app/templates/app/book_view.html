@@ -116,25 +116,24 @@
                   {% endif %}
                   {% endif %}
 
-                    <td>
                   {% if barnes_and_noble_price %}
-                  {% if barnes_and_noble_url %}
+                    <td>
                         <a href="{{barnes_and_noble_url|safe}}"><img id="barnes_logo", src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Barnes_and_Noble_logo.svg/2000px-Barnes_and_Noble_logo.svg.png"></a>
                     </td>
                   {% endif %}
-                  {% endif %}
 
-                    <td>
+
                   {% if indie_price %}
                   {% if indie_url %}
+                    <td>
                         <a href="{{indie_url|safe}}"><img id="indie_logo", src="http://3u5tts1uxf4t2zylbl2bpy2w.wpengine.netdna-cdn.com/wp-content/uploads/2014/11/indiebound.png"></a>
                     </td>
                   {% endif %}
                   {% endif %}
 
-                    <td>
                   {% if google_play_price %}
                   {% if google_play_url %}
+                    <td>
                         <a href="{{google_play_url|safe}}"><img id="google_logo", src="https://techaeris.com/wp-content/uploads/2016/07/Google-Play-Books-FI.jpg"></a>
                     </td>
                   {% endif %}
@@ -216,12 +215,13 @@
         </div>
         {% endfor %}
     </div>
+
       <br>
-    <div class="charts">
         <h2 style="font-family: 'Montserrat','Helvetica Neue';"><center>Analytics</center></h2>
+    <div class="charts">
+
       {% if chart %}
       <div id = "genre_dissection">
-
         {{chart|safe}}
        </div>
       {% endif %}
