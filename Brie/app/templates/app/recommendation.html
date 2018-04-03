@@ -24,6 +24,7 @@
 <!--===============================================================================================-->
   <link rel="stylesheet" type="text/css" href="../../static/table/css/util.css">
   <link rel="stylesheet" type="text/css" href="../../static/table/css/main.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 
 <body class="fixed-nav sticky-footer bg-dark" id="page-top">
@@ -125,7 +126,12 @@
         <button type="submit" class="btn btn-primary active" style="width: 50%; margin-left: 23%; margin-top: -5%">Get Recommendations<a href="#recommTable"></a></button>
         </div>
         </form>
-        <h4 style="width: 50%; margin-left: 40%; visibility: hidden;" id="RecommTitle">Recommendations</h4>
+        <br>
+        <br>
+        <h3 style="width: 50%; margin-left: 40%; visibility: hidden;" id="ProfileTitle"><b>Your Taste Profile</b></h4>
+        <div class="row" id="UserProfileDiv" style="visibility: hidden">
+        </div>
+        <h4 style="width: 50%; margin-left: 40%; visibility: hidden;" id="RecommTitle"><b>Recommendations</b></h4>
         <div class="table100 ver3 m-b-110" style="margin-top: 15px; visibility: hidden;" id="RecommendationsTable">
           <div class="table100-head">
             <table>
@@ -252,13 +258,21 @@ $(document).on('submit', '#rated_books', function(e){
        },
        success:function(data, textStatus, jqXHR){
         data = JSON.parse(data)
-        document.getElementById("RecommendationsTable").style.visibility = "visible"
-        document.getElementById("RecommTitle").style.visibility = "visible"
         var table_content = $("#recommTableContent")
+        var profile = $("#UserProfileDiv")
         table_content.empty()
+        profile.empty()
         if(data.length > 0)
         {
-            for(var i = 0; i < data.length; i++){
+          document.getElementById("RecommendationsTable").style.visibility = "visible"
+          document.getElementById("RecommTitle").style.visibility = "visible"
+          document.getElementById("ProfileTitle").style.visibility = "visible"
+          var charts = data[data.length-1]
+          var user_profile_div = document.getElementById("UserProfileDiv")
+          user_profile_div.style.visibility = "visible"
+          profile.append('<div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">' + charts["words_table_div"] + '</div>')
+          profile.append('<div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">' + charts["genre_dissect"] + '</div>')
+            for(var i = 0; i < data.length-1; i++){
               if(i == 30){
                 break
               }

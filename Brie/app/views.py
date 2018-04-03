@@ -51,15 +51,6 @@ def search_result(request):
 
 
 def book_view(request, book_id):
-
-    # context = dict()
-    # context["title"] = book["title"]
-    # context["author"] = book["author"]
-    # context["pages"] = book["pages"]
-    # context["ID"] = book_id
-    # context["publication"] = book["publication"]
-    # return render(request, 'app/book_view.html', context)
-
     book = books_collection.find_one({"id": book_id})
     book_similar = similar_books_collection.find_one({"Id": book_id})
     book_goodreads_desc = goodreads_description.find_one({"id": book_id})
@@ -106,7 +97,7 @@ def book_view(request, book_id):
     trace = go.Pie(labels=genres_lst, values=genres_percent,
                    marker=dict(colors=colors))  # marker=dict(colors=colors, line=dict(color='#000000', width=1)
     data = go.Data([trace])
-    layout = go.Layout(title="B.R.I.E's Genre Dissection", height=500, width=500,
+    layout = go.Layout(title="<b>Genre Dissection</b>", height=500, width=500,
                        autosize=False)
     figure = go.Figure(data=data, layout=layout)
     div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False}, show_link=False)
@@ -987,11 +978,14 @@ def get_recommendations(request):
 
     # Sort genres based on score
     sorted_genre_list = []
+    sorted_genre_score_list = []
     for w in sorted(genre_score_dict, key=genre_score_dict.get, reverse=True):
         sorted_genre_list.append(w)
+        sorted_genre_score_list.append(genre_score_dict[w])
 
     real_sorted_genre_list = []
-    del real_genre_dict["Fiction"]
+    if "Fiction" in real_genre_dict:
+        del real_genre_dict["Fiction"]
     for w in sorted(real_genre_dict, key=real_genre_dict.get, reverse=True):
         real_sorted_genre_list.append(w)
 
@@ -1028,7 +1022,7 @@ def get_recommendations(request):
         for word in tokens:
             word_like_prob = (like_words_dict[word] + alpha) / (total_words_like + total_unique_words)
             word_dislike_prob = (dislike_words_dict[word] + alpha) / (total_words_dislike + total_unique_words)
-            word_strength_dict[word] = math.log(word_like_prob / word_dislike_prob)
+            word_strength_dict[word] = (math.log(word_like_prob / word_dislike_prob)) * like_words_dict[word]
             like_prob += math.log(word_like_prob)
             dislike_prob += math.log(word_dislike_prob)
         book_score = like_prob / dislike_prob
@@ -1062,10 +1056,44 @@ def get_recommendations(request):
             break
     i = 0
 
+    top_words_list = []
+    top_words_score = []
     for w in sorted(word_strength_dict, key=word_strength_dict.get, reverse=True):
         print(w + " " + str(word_strength_dict[w]))
         i += 1
+        top_words_list.append(w)
+        top_words_score.append("%.2f" % word_strength_dict[w])
         if i == 30:
             break
 
-    return HttpResponse(json.dumps(response))
+    charts = dict()
+    trace = go.Table(
+        header=dict(values=[['Word'], ['Score']],
+                    line=dict(color='black'),
+                    fill=dict(color='#a1c3d1')
+                    ),
+        cells=dict(values=[top_words_list,
+                           top_words_score],
+                   line=dict(color='black'))
+    )
+
+    data = [trace]
+    layout = go.Layout(title="<b>Influential Words</b>", height=550, width=600,
+                       autosize=False)
+    figure = go.Figure(data=data, layout=layout)
+    words_table_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
+                               show_link=False)
+
+    trace = go.Pie(labels=sorted_genre_list, values=sorted_genre_score_list)
+    data = go.Data([trace])
+    layout = go.Layout(title="<b>Genre Dissection of you taste</b>", height=500, width=500,
+                       autosize=False)
+    figure = go.Figure(data=data, layout=layout)
+    genre_dissect_div = opy.plot(figure, auto_open=False, output_type='div',
+                                 config={"displayModeBar": False}, show_link=False)
+
+    charts["genre_dissect"] = genre_dissect_div
+    charts["words_table_div"] = words_table_div
+    response.append(charts)
+
+    return HttpResponse([json.dumps(response)])
