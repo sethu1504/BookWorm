@@ -70,23 +70,37 @@
   </nav>
   <div class="content-wrapper">
     <div class="container-fluid">
-      An Overview of Book Results
+        <h1><center>An Overview of Book Results</center></h1>
+        <br/><br/>
         <div>
-             {% if most_popular_genres_div %}
+            {% if most_popular_genres_div %}
                 <div >
                   <center>
                 {{most_popular_genres_div|safe}}
                     </center>
                 </div>
                 {% endif %}
-
-             {% if genres_by_year_div %}
-                <div >
-                    <center>
-                {{genres_by_year_div|safe}}
-                   </center>
+            <div class="row">
+                <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+                  {% if genres_by_year_div %}
+                        <div >
+                            <center>
+                        {{genres_by_year_div|safe}}
+                           </center>
+                        </div>
+                        {% endif %}
                 </div>
-                {% endif %}
+                <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+                    <br/>
+                   {% if languages_by_year_div %}
+                        <div >
+                          <center>
+                        {{languages_by_year_div|safe}}
+                            </center>
+                        </div>
+                        {% endif %}
+                    </div>
+            </div>
 
             {% if most_priciest_genres_div %}
                 <div >
@@ -95,7 +109,7 @@
                       </center>
                 </div>
                 {% endif %}
-
+            <br/><br/>
 
             {% if avg_pages_per_yrange_div %}
                 <div >
@@ -105,18 +119,41 @@
                 </div>
                 {% endif %}
 
+            <br/><br/>
+
+            {% if books_by_month_div %}
+                <div >
+                   <center>
+                {{books_by_month_div|safe}}
+                      </center>
+                </div>
+                {% endif %}
+
+            <br/><br/>
+
+            {% if avg_price_per_page_div %}
+                <div >
+                   <center>
+                {{avg_price_per_page_div|safe}}
+                      </center>
+                </div>
+                {% endif %}
 
           <br/><br/>
 
+            <center><b><h2>Wordclouds: Famous Words by Years</h2></b> </center>
 
-
+            <div class='circle-container'>
+                <img src="../../static/img/image5.png", alt= '1800 - 1870',title='1800 - 1870'>
+                <img src="../../static/img/image4.png" , alt='1870 - 1960',title='1870 - 1960'>
+                <center>
+                <img src="../../static/img/image3.png" ,alt='1960 - 2000',title='1960 - 2000'>
+                    </center>
+                <img src="../../static/img/image2.png", alt='2000 - 2010',title='2000 - 2010'>
+                <img src="../../static/img/image1.png", alt='2010 - 2020',title='2010 - 2020'>
+            </div>
         </div>
     </div>
-      <div>
-
-
-
-      </div>
 
 
     <a class="scroll-to-top rounded" href="#page-top">
