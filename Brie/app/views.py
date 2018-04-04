@@ -909,24 +909,21 @@ def get_recommendations(request):
     for book in sel_books:
         book_rating = int(book["rating"])
         book_id = int(book["book_id"])
-        sim_book_ids = similar_books_collection.find({"Id": book_id})
+        sim_book_ids = similar_books_collection.find_one({"Id": book_id})
         if book_rating > 5:
             like_books_rating_dict[book_id] = book_rating
             like_books.append(book_id)
             like_books_alone.append(book_id)
-            idx = 1
-            for sim_book in sim_book_ids:
-                sim_book_id = sim_book["SIM" + str(idx)]
+            for i in range(1, 11):
+                sim_book_id = sim_book_ids["SIM" + str(i)]
                 like_books.append(sim_book_id)
                 like_books_rating_dict[sim_book_id] = book_rating
-                idx += 1
         else:
-            idx = 1
             dislike_books.append(book_id)
             dislike_books_alone.append(book_id)
-            for sim_book in sim_book_ids:
-                dislike_books.append(sim_book["SIM" + str(idx)])
-                idx += 1
+            for i in range(1, 11):
+                print(sim_book_ids["SIM" + str(i)])
+                dislike_books.append(sim_book_ids["SIM" + str(i)])
 
     # Fetch Like and dislike books data
     like_books_data = books_collection.find({"id": {"$in": like_books}})
@@ -960,6 +957,7 @@ def get_recommendations(request):
 
     dislike_words_dict = dict()
     dislike_words_dict = defaultdict(lambda: 0, dislike_words_dict)
+    dislike_series = []
 
     for book in dislike_books_data:
         tokens = book["goodreads_desc"] + book["riffle_desc"] + book["amazon_desc"] + book["readgeek_desc"] \
@@ -967,7 +965,17 @@ def get_recommendations(request):
                  + book["author"].split(" ")
         for word in tokens:
             dislike_words_dict[word] += 1
+        book_title = book["title"]
+        print(book_title)
+        series_name = ""
+        if "#" in book_title and "(" in book_title:
+            brack_index = book_title.find("(")
+            series_number_name = book_title[brack_index+1:len(book_title)-2]
+            series_name = series_number_name.split(",")[0]
+        if len(series_name) > 0:
+            dislike_series.append(series_name)
 
+    print(dislike_series)
     # Values needed for probability calculation
     total_words_like = sum(like_words_dict.values())
     total_words_dislike = sum(dislike_words_dict.values())
@@ -984,10 +992,12 @@ def get_recommendations(request):
         sorted_genre_score_list.append(genre_score_dict[w])
 
     real_sorted_genre_list = []
+    real_sorted_genre_scores = []
     if "Fiction" in real_genre_dict:
         del real_genre_dict["Fiction"]
     for w in sorted(real_genre_dict, key=real_genre_dict.get, reverse=True):
         real_sorted_genre_list.append(w)
+        real_sorted_genre_scores.append(real_genre_dict[w])
 
     has_child = False
     if "Childrens" in real_sorted_genre_list[0:4]:
@@ -1001,16 +1011,27 @@ def get_recommendations(request):
 
     prediction_books = books_collection.find()
     for book in prediction_books:
+        book_title = book["title"]
+        if "#" in book_title and "(" in book_title:
+            brack_index = book_title.find("(")
+            series_number_name = book_title[brack_index + 1:len(book_title) - 2]
+            series_name = series_number_name.split(",")[0]
+            if series_name in dislike_series:
+                continue
+
+        if (book_title in like_books_alone) or (book_title in dislike_books):
+            continue
+
         actual_book_genres = book["genres"]
+        score_multiplier = 0
         at_least_one = False
         for genre in real_sorted_genre_list[0:4]:
             if genre in actual_book_genres[0:4]:
                 if not has_child and "Childrens" in actual_book_genres[0:4]:
                     continue
-                at_least_one = True
-                break
+                score_multiplier += 1
 
-        if not at_least_one:
+        if score_multiplier == 0:
             continue
 
         tokens = book["goodreads_desc"] + book["riffle_desc"] + book["amazon_desc"] + book["readgeek_desc"] \
@@ -1025,7 +1046,7 @@ def get_recommendations(request):
             word_strength_dict[word] = (math.log(word_like_prob / word_dislike_prob)) * like_words_dict[word]
             like_prob += math.log(word_like_prob)
             dislike_prob += math.log(word_dislike_prob)
-        book_score = like_prob / dislike_prob
+        book_score = (like_prob / dislike_prob) * score_multiplier
 
         prev_score = book_suggestion_score_dict[book["id"]]
         if book_score > prev_score:
@@ -1084,7 +1105,7 @@ def get_recommendations(request):
     words_table_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
                                show_link=False)
 
-    trace = go.Pie(labels=sorted_genre_list, values=sorted_genre_score_list)
+    trace = go.Pie(labels=real_sorted_genre_list[0:5], values=real_sorted_genre_scores[0:5])
     data = go.Data([trace])
     layout = go.Layout(title="<b>Genre Dissection of you taste</b>", height=500, width=500,
                        autosize=False)
