@@ -13,11 +13,11 @@ from plotly.graph_objs import Bar, Scatter, Layout
 import numpy as np
 import collections
 import random
-from wordcloud import WordCloud
-import matplotlib.pyplot as plt
 from os import path
 from PIL import Image
 import string
+#from wordcloud import WordCloud
+#import matplotlib.pyplot as plt
 
 mongo_client = MongoClient('mongodb://sethu:sethu123@localhost:27017/Brie')
 mongo_brie_db = mongo_client.Brie
@@ -389,7 +389,6 @@ def overview(request):
     #     table = str.maketrans({key: None for key in string.punctuation})
     #     new_text = str(text.translate(table))
     #     words_dict[key] = new_text
-    #     print("text::::::::", new_text[0:100])
     #     wc = WordCloud(background_color="white",
     #                    max_words=200,
     #                    margin=10,
