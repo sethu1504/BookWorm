@@ -1327,7 +1327,7 @@ def get_recommendations(request):
     words_table_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
                                show_link=False)
 
-    trace = go.Pie(labels=real_sorted_genre_list[0:5], values=real_sorted_genre_scores[0:5])
+    trace = go.Pie(labels=real_sorted_genre_list[0:5], values=real_sorted_genre_scores[0:5], textfont=dict(size=18))
     data = go.Data([trace])
     layout = go.Layout(title="<b>Genre Dissection of you taste</b>", height=500, width=500,
                        autosize=False)
