@@ -233,7 +233,7 @@ def book_view(request, book_id):
         genres_lst.append(key.title())
         genres_percent.append(value)
 
-    colors = ['#E13C47', '#74AFC6', '#F3EA71', '#F4F1BB']
+    colors = ['#DAB808', '#AFD5AA', '#6C91C2', '#FE5F55']
     trace = go.Pie(labels=genres_lst, values=genres_percent,
                    marker=dict(colors=colors),textfont=dict(size=18))  # marker=dict(colors=colors, line=dict(color='#000000', width=1))
     data = go.Data([trace])
