@@ -69,6 +69,7 @@ def book_view(request, book_id):
     context["ID"] = book_id
     context["publication"] = book["publication"]
     context["image"] = book["image"]
+    context["rating"] = book["rating"]
     context["indie_price"] = book["indie_price"]
     context["indie_url"] = book["indie_url"]
 
@@ -86,12 +87,149 @@ def book_view(request, book_id):
     genres_dict = book["genre_dissect"]
 
     sim_list = []
+    title_sim, pages_sim, avg_price_sim = [], [], []
 
     for i in range(1, 11):
-        similar_book = books_collection.find_one({"id": book_similar["SIM" + str(i)]})
-        sim_list.append(similar_book)
+        sim_book = books_collection.find_one({"id": book_similar["SIM" + str(i)]})
+
+        n = 0
+        sum = 0
+        for price in sim_book['amazon_price'],sim_book['barnes_and_noble_price'],sim_book['indie_price'],sim_book['google_play_price']:
+            if price > 1:
+                n = n + 1
+                sum = sum + price
+
+        try:
+            avgPrice = round(sum/n, 2)
+        except:
+            pass
+
+        title_sim.append(sim_book['title'])
+        pages_sim.append(sim_book['pages'])
+        avg_price_sim.append(avgPrice)
+
+        sim_list.append(sim_book)
 
     context["similar_books"] = sim_list
+
+    # This execute once for the original book
+
+    b_n = 0
+    b_sum = 0
+    for b_price in book['amazon_price'], book['barnes_and_noble_price'], book['indie_price'], book[
+        'google_play_price']:
+        if b_price > 1:
+            b_n = b_n + 1
+            b_sum = b_sum + b_price
+
+    try:
+        b_avgPrice = round(b_sum / b_n, 2)
+    except:
+        pass
+    title_sim.append(book['title'])
+    pages_sim.append(book['pages'])
+    avg_price_sim.append(b_avgPrice)
+
+
+    list1, list2, list3 = zip(*sorted(zip(avg_price_sim, title_sim, pages_sim)))
+    sort_sim_price, sort_sim_title, sort_sim_pages = (list(t) for t in zip(*sorted(zip(list1, list2, list3))))
+
+    b_index = sort_sim_title.index(book['title'])
+
+    k = book['pages']
+    pages = sorted(sort_sim_pages)
+    a = [sort_sim_pages.index(v) for v in pages if v > k]
+    b = [sort_sim_pages.index(v) for v in pages if v < k]
+
+    # Import comment
+    # p_a = [v for v in pages if v > k]
+    # p_b = [v for v in pages if v < k]
+    #
+    # context["a_0"] = a[0]
+    # context["a_1"] = a[1]
+    # context["b_0"] = b[-1]
+    # context["b_1"] = b[-2]
+    #
+    # context["p_a_0"] = p_a[0]
+    # context["p_a_1"] = p_a[1]
+    # context["p_b_0"] = p_b[-1]
+    # context["p_b_1"] = p_b[-2]
+
+    color_list = ['#ff0000','#ff0000','#ff0000','#ff0000','#ff0000',
+                  '#ff0000','#ff0000','#ff0000','#ff0000','#ff0000','#ff0000']
+    try:
+        color_list[a[0]] = '#00ff00'
+    except:
+        pass
+
+    try:
+        color_list[a[1]] = '#00ff00'
+    except:
+        pass
+
+    try:
+        color_list[b[-1]] = '#00ff00'
+    except:
+        pass
+
+    try:
+        color_list[b[-2]] = '#00ff00'
+    except:
+        pass
+
+    color_list[b_index] = '#0000ff'
+
+    size = sort_sim_pages
+    trace = go.Scatter(
+        x=sort_sim_title,
+        y=sort_sim_price,
+        text= sort_sim_pages, #label_pages,
+        name='Other Similar Books',
+        mode='markers',
+        marker=dict(
+            color=color_list,
+            opacity=[0.6] * 11,
+            size=size,
+            sizemode='area',
+            sizeref=2. * max(size) / (80. ** 2),
+            sizemin=4,
+        ),
+
+    )
+    trace2 = go.Scatter(
+        x=[None],
+        y=[None],
+        name='Similar Books by Pages',
+        mode='markers',
+        marker=dict(
+            color='#00FF00',
+            size=15,
+        ),
+    )
+    trace3 = go.Scatter(
+        x=[None],
+        y=[None],
+        name='Current Book',
+        mode='markers',
+        marker=dict(
+            color='#0000FF',
+            size=15,
+        ),
+    )
+    data = [trace, trace2, trace3]
+
+    layout = go.Layout(title="<b>Book Features</b>", height=500, width=1000,
+                       autosize=False, font=dict(size=15),
+                       yaxis=dict(title='Avg. Market Price ($)')
+                       )
+
+    figure = go.Figure(data=data, layout=layout)
+
+    bubble = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
+                                        show_link=False)
+    context["bubble_price"] = bubble
+
+
     #------Charts-------
 
     genres_lst = []
@@ -100,15 +238,17 @@ def book_view(request, book_id):
         genres_lst.append(key.title())
         genres_percent.append(value)
 
-    colors = ['#ff598f', '#fd8a5e', '#e0e300', '#01dddd']
+    colors = ['#DAB808', '#AFD5AA', '#6C91C2', '#FE5F55']
     trace = go.Pie(labels=genres_lst, values=genres_percent,
-                   marker=dict(colors=colors))  # marker=dict(colors=colors, line=dict(color='#000000', width=1)
+                   marker=dict(colors=colors),textfont=dict(size=18))  # marker=dict(colors=colors, line=dict(color='#000000', width=1))
     data = go.Data([trace])
     layout = go.Layout(title="<b>Genre Dissection</b>", height=500, width=500,
                        autosize=False)
     figure = go.Figure(data=data, layout=layout)
     div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False}, show_link=False)
-    context["chart"] = div
+    context["pie_genre"] = div
+
+
     return render(request, 'app/book_view.html', context)
 
 
