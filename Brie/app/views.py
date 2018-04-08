@@ -213,10 +213,9 @@ def book_view(request, book_id):
     )
     data = [trace, trace2, trace3]
 
-    layout = go.Layout(title="<b>Book Features</b>", height=600, width=1600,
+    layout = go.Layout(title="<b>Book Features</b>", height=500, width=1000,
                        autosize=False, font=dict(size=15),
-                       yaxis=dict(title='Avg. Market Price ($)'),
-                       xaxis=dict(title='Book Title', tickangle=25,),
+                       yaxis=dict(title='Avg. Market Price ($)')
                        )
 
     figure = go.Figure(data=data, layout=layout)
