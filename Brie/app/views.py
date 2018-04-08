@@ -538,8 +538,6 @@ def overview(request):
     return render(request, 'app/overview.html', context)
 
 
-
-
 def publishers(request):
     # Top Publishers by number of books
     publishers_by_books = books_collection.aggregate([{"$group": {"_id": "$publication", "count": {"$sum": 1}}},
@@ -754,6 +752,57 @@ def publishers(request):
 
     context["books_pub_author_div"] = mix_div
 
+    # Genres by Publishers
+    top_genres = ["Fantasy", "Historical", "Mystery", "Nonfiction", "Young Adult", "Classics"]
+
+    genre_book_count_dict = dict()
+    for genre in top_genres:
+        book_count_list = []
+        for publisher in publisher_names:
+            book_count = books_collection.find({"genres.0": genre, "publication": publisher}).count()
+            book_count_list.append(book_count)
+        genre_book_count_dict[genre] = book_count_list
+
+    trace1 = go.Bar(
+        x=publisher_names,
+        y=genre_book_count_dict["Fantasy"],
+        name='Fantasy'
+    )
+    trace2 = go.Bar(
+        x=publisher_names,
+        y=genre_book_count_dict["Historical"],
+        name='Historical'
+    )
+    trace3 = go.Bar(
+        x=publisher_names,
+        y=genre_book_count_dict["Mystery"],
+        name='Mystery'
+    )
+    trace4 = go.Bar(
+        x=publisher_names,
+        y=genre_book_count_dict["Nonfiction"],
+        name='Nonfiction'
+    )
+    trace5 = go.Bar(
+        x=publisher_names,
+        y=genre_book_count_dict["Young Adult"],
+        name='Young Adult'
+    )
+    trace6 = go.Bar(
+        x=publisher_names,
+        y=genre_book_count_dict["Classics"],
+        name='Classics'
+    )
+
+    data = [trace1, trace2, trace3, trace4, trace5, trace6]
+    layout = go.Layout(title='<b>Genre published by Publishers</b>', barmode='stack',
+                       yaxis=dict(title='Number of Books'))
+
+    mig_fig = {'data': data, 'layout': layout}
+    mix_div = plotly.offline.plot(mig_fig, output_type="div", include_plotlyjs=False, link_text="", show_link="False")
+
+    context["genre_by_publishers"] = mix_div
+
     return render(request, 'app/publishers.html', context)
 
 
@@ -894,19 +943,28 @@ def authors(request):
 
     author_ratings = books_collection.aggregate([{"$match": {"author": {"$in": bestsellers_authors}}},
                                                  {"$group": {"_id": "$author", "count": {"$sum": 1},
-                                                             "avgRating": {"$avg": "$rating"}}}])
+                                                             "avgRating": {"$avg": "$rating"}}},
+                                                 {"$sort": {"avgRating": -1}}])
     ratings_for_author = []
+    sorted_authors = []
+    sorted_price = []
     for row in author_ratings:
+        print(row)
         rating = "%.2f" % row["avgRating"]
         ratings_for_author.append(rating)
+        sorted_authors.append(row["_id"])
+
+    for author in sorted_authors:
+        auth_index = bestsellers_authors.index(author)
+        sorted_price.append(bestsellers_value[auth_index])
 
     trace1 = Scatter(
-        x=bestsellers_authors,
-        y=bestsellers_value,
+        x=sorted_authors,
+        y=sorted_price,
         name='Value in 100 millions'
     )
     trace2 = Bar(
-        x=bestsellers_authors,
+        x=sorted_authors,
         y=ratings_for_author,
         name='Average Rating',
         marker=dict(color='rgb(163, 163, 117)')
@@ -969,7 +1027,82 @@ def authors(request):
 
 
 def evaluation(request):
-    return render(request, 'app/evaluation.html')
+    books = books_collection.find()
+    success = 0
+    failure = 0
+
+    for book in books:
+        actual_genres = book["genres"]
+        genre_dissect_dict = book["genre_dissect"]
+        hits = 1
+        for genre in genre_dissect_dict:
+            if genre == "crime":
+                if "Crime" in actual_genres or "Mystery" in actual_genres or "Thriller" in actual_genres\
+                        or "Detective" in actual_genres or "Suspense" in actual_genres:
+                    hits += 1
+            elif genre == "fantasy":
+                if "Fantasy" in actual_genres or "Childrens" in actual_genres or "Urban Fantasy" in actual_genres\
+                        or "Fairies" in actual_genres or "Vampires" in actual_genres or "Horror" in actual_genres\
+                        or "Paranormal" in actual_genres:
+                    hits += 1
+            elif genre == "young-adult":
+                if "Young Adult" in actual_genres or "Adventure" in actual_genres:
+                    hits += 1
+            elif genre == "romance":
+                if "Romance" in actual_genres or "Womens Fiction" in actual_genres or "Chick Lit" in actual_genres:
+                    hits += 1
+            elif genre == "comedy":
+                if "Comedy" in actual_genres or "Humour" in actual_genres:
+                    hits += 1
+            elif genre == "dystopia":
+                if "Dystopia" in actual_genres or "Vampires" in actual_genres:
+                    hits += 1
+            elif genre == "action":
+                if "Action" in actual_genres:
+                    hits += 1
+            elif genre == "historical":
+                if "Historical" in actual_genres or "Historical Fiction" in actual_genres or \
+                                "Classics" in actual_genres or "Contemporary" in actual_genres or \
+                                "War" in actual_genres:
+                    hits += 1
+            elif genre == "non-fiction":
+                if "Nonfiction" in actual_genres or "Cultural" in actual_genres or "Politics" in actual_genres\
+                        or "Writing" in actual_genres or "Essays" in actual_genres or "Literature" in actual_genres\
+                        or "Autobiography" in actual_genres:
+                    hits += 1
+            elif genre == "science-fiction":
+                if "Science Fiction" in actual_genres or "Science" in actual_genres:
+                    hits += 1
+            elif genre == "self-help":
+                if "Self Help" in actual_genres or "Christianity" in actual_genres or "Autobiography" in actual_genres \
+                        or "Literature" in actual_genres or "Psychology" in actual_genres\
+                        or "Business" in actual_genres:
+                    hits += 1
+            if hits == 2:
+                break
+        if hits >= 2:
+            success += 1
+        else:
+            failure += 1
+
+    print(success)
+    print(failure)
+
+    context = dict()
+    colors = ['#8EAA5D', '#DB3A34']
+
+    trace = go.Pie(labels=["Success - More than 2 Hits", "Failure - Lesser than 2 Hits"], values=[success, failure],
+                   marker=dict(colors=colors))
+    data = go.Data([trace])
+    layout = go.Layout(title="<b>Evaluation of Content-Genre Dissection</b>", height=700, width=700,
+                       autosize=False)
+    figure = go.Figure(data=data, layout=layout)
+    genre_eval_div = opy.plot(figure, auto_open=False, output_type='div',
+                              config={"displayModeBar": False}, show_link=False)
+
+    context["genre_eval_div"] = genre_eval_div
+
+    return render(request, 'app/evaluation.html', context)
 
 
 def get_recommendations(request):
@@ -1047,7 +1180,6 @@ def get_recommendations(request):
         for word in tokens:
             dislike_words_dict[word] += 1
         book_title = book["title"]
-        print(book_title)
         series_name = ""
         if "#" in book_title and "(" in book_title:
             brack_index = book_title.find("(")
@@ -1056,7 +1188,6 @@ def get_recommendations(request):
         if len(series_name) > 0:
             dislike_series.append(series_name)
 
-    print(dislike_series)
     # Values needed for probability calculation
     total_words_like = sum(like_words_dict.values())
     total_words_dislike = sum(dislike_words_dict.values())
@@ -1080,8 +1211,9 @@ def get_recommendations(request):
         real_sorted_genre_list.append(w)
         real_sorted_genre_scores.append(real_genre_dict[w])
 
+    print(real_sorted_genre_list)
     has_child = False
-    if "Childrens" in real_sorted_genre_list[0:4]:
+    if "Childrens" in real_sorted_genre_list[0:2]:
         has_child = True
 
     book_suggestion_score_dict = dict()
@@ -1105,7 +1237,6 @@ def get_recommendations(request):
 
         actual_book_genres = book["genres"]
         score_multiplier = 0
-        at_least_one = False
         for genre in real_sorted_genre_list[0:4]:
             if genre in actual_book_genres[0:4]:
                 if not has_child and "Childrens" in actual_book_genres[0:4]:

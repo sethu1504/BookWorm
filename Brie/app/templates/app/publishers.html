@@ -71,7 +71,9 @@
   </nav>
   <div class="content-wrapper">
     <div class="container-fluid">
-      <h1>Publisher Based Reports</h1>
+      <h1><center>Publisher Based Reports</center></h1>
+      <br>
+      <br>
       <div>
         {{ pub_by_book_div|safe }}
       </div>
@@ -93,6 +95,7 @@
         </div>
       </div>
       {{books_pub_author_div|safe}}
+      {{genre_by_publishers|safe}}
     </div>
     <a class="scroll-to-top rounded" href="#page-top">
       <i class="fa fa-angle-up"></i>
