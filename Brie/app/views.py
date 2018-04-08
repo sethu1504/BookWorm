@@ -12,6 +12,12 @@ import plotly.plotly
 from plotly.graph_objs import Bar, Scatter, Layout
 import numpy as np
 import collections
+import random
+from os import path
+from PIL import Image
+import string
+#from wordcloud import WordCloud
+#import matplotlib.pyplot as plt
 
 mongo_client = MongoClient('mongodb://sethu:sethu123@localhost:27017/Brie')
 mongo_brie_db = mongo_client.Brie
@@ -107,8 +113,9 @@ def book_view(request, book_id):
 
 
 def random_color_func(word=None, font_size=None, position=None,  orientation=None, font_path=None, random_state=None):
-    h = int(360.0 * 32.0 / 255.0)
-    s = int(100.0 * 56.0 / 255.0)
+    random_int = (random.randint(0, 200))
+    h = int(360.0 * random_int / 255.0)
+    s = int(100.0 * random_int / 255.0)
     l = int(100.0 * float(random_state.randint(60, 120)) / 255.0)
     return "hsl({}, {}%, {}%)".format(h, s, l)
 
@@ -162,8 +169,8 @@ def overview(request):
         chart_labels_dict[years_lst[i]] = chart_labels[i]
 
     ctr = 0
-    while ctr<2000:
-        page_buckets.append(ctr+100)
+    while ctr < 2000:
+        page_buckets.append(ctr + 100)
         ctr += 100
 
     # all books are in their respective decades by the end of this for loop
@@ -198,7 +205,7 @@ def overview(request):
         book_counter_per_yrange = 0
         pages_counter_per_yrange = 0
         for item in book:
-            #genre-related
+            # genre-related
             if len(item["genres"]) == 0 or item["genres"][0] == "":
                 genre_dissect = item["genre_dissect"]
                 if (len(genre_dissect)) == 0:
@@ -222,7 +229,7 @@ def overview(request):
             price_val = 0
             if 1 <= item["google_play_price"] <= 100:
                 price_sum += item["google_play_price"]
-                price_val +=1
+                price_val += 1
             if 1 <= item["barnes_and_noble_price"] <= 100:
                 price_sum += item["barnes_and_noble_price"]
                 price_val += 1
@@ -243,20 +250,20 @@ def overview(request):
             language = item["language"]
             if language == "":
                 language = "Unspecified"
-            if(language!="Unspecified"): #removing unspecified
+            if (language != "Unspecified"):  # removing unspecified
                 book_languages_dict[year].append(language)
                 all_language_lst.append(language)
 
             # #-books/month
             pub_month = item["pub_month"]
-            if(pub_month!=-1):
-                book_months_dict[pub_month] +=1
+            if (pub_month != -1):
+                book_months_dict[pub_month] += 1
 
             # pgs vs price
             for size in page_buckets:
-                if(size-100 <=item["pages"] < size):
-                    if(price_sum>0 and item["pages"]>0):
-                        pages_price_dict[size].append(price_sum/price_val)
+                if (size - 100 <= item["pages"] < size):
+                    if (price_sum > 0 and item["pages"] > 0):
+                        pages_price_dict[size].append(price_sum / price_val)
 
             # popular words
             descriptions = []
@@ -276,7 +283,8 @@ def overview(request):
 
     for (key, val) in genre_count.items():
         v = sorted(val.items(), key=lambda x: x[1], reverse=True)
-        genre_count[key] = ("{:<15}".format(v[0][0]), '<br>', "{:<15}".format(v[1][0]),'<br>', "{:<15}".format(v[2][0]))
+        genre_count[key] = (
+        "{:<15}".format(v[0][0]), '<br>', "{:<15}".format(v[1][0]), '<br>', "{:<15}".format(v[2][0]))
         genre_count[key] = ''.join(genre_count[key])
         chart_values.append(genre_count[key])
 
@@ -286,14 +294,13 @@ def overview(request):
                      cells=dict(values=[chart_labels, chart_values],
                                 line=dict(color='black'),
                                 align=['center']))
-
     data = [trace]
     layout = go.Layout(title="<b>Top Genres per Year Range</b>", height=650, width=550,
-                       autosize=False, font=dict( size=15))
+                       autosize=False, font=dict(size=15))
 
     figure = go.Figure(data=data, layout=layout)
-    genres_by_year_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
-                                  show_link=False)
+    genres_by_year_div = opy.plot(figure, auto_open=False, output_type='div',
+                                  show_link=False)  # config={"displayModeBar": False},
 
     context["genres_by_year_div"] = genres_by_year_div
 
@@ -317,15 +324,20 @@ def overview(request):
         x=genre_labels,
         y=genre_values,
         name='Number of Books',
-        marker=dict(color='rgb(49,130,189)'))
+        marker=dict(
+            color=['#00556B', '#00637C', '#006E89', '#007896', '#008EB2',
+                   '#009FC6', '#00A3CC', '#00A9D3', '#00B1DD', '#00C1F2',
+                   ]
+        ))
 
     data = [trace]
-    layout = go.Layout( title="<b>Top-10 Genres in Our Collection</b>", height=550, width=1100,
+    layout = go.Layout(title="<b>Top-10 Genres in Our Collection</b>", height=550, width=1100,
                        autosize=False, yaxis=dict(title='Number of Books'),
-                        xaxis=dict(title='Genres'), font=dict( size=15))
+                       xaxis=dict(title='Genres'), font=dict(size=15))
     figure = go.Figure(data=data, layout=layout)
     most_popular_genres_div = opy.plot(figure, auto_open=False, output_type='div',
-                                       config={"displayModeBar": False}, show_link=False)
+                                       show_link=False)  # config={"displayModeBar": False}
+
     context["most_popular_genres_div"] = most_popular_genres_div
 
     # chart-3: price per genre
@@ -335,7 +347,7 @@ def overview(request):
 
     for key, value in overall_prices.items():
         if top_most_genres_dict[key] > 20:
-            v = round(overall_prices[key]/top_most_genres_dict[key],2)
+            v = round(overall_prices[key] / top_most_genres_dict[key], 2)
             overall_prices_result[key] = v
 
     overall_prices_result_sorted = sorted(overall_prices_result.items(), key=lambda x: x[1], reverse=True)
@@ -349,18 +361,20 @@ def overview(request):
 
     trace = go.Bar(x=price_labels, y=price_values, hoverinfo='label+percent',
                    marker=dict(
-                       color=['#ff598f', '#fd8a5e', '#e0e300', '#01dddd', '#ff598f', '#fd8a5e', '#e0e300',
-                              '#01dddd', '#ff598f', '#fd8a5e', '#e0e300', '#01dddd', '#fd8a5e', '#e0e300',
-                              '#01dddd'])
-                   )
+                       color=[
+                           '#3C015E', '#44026B', '#530282', '#5B028E', '#600396',
+                           '#6A159B', '#7117A5', '#7B19B5', '#811ABC', '#7D07C1',
+                           '#8708D1', '#8C08D8', '#9409E5', '#9700EF', '#A100FF'
+                       ]
+                   ))
     data = go.Data([trace])
     layout = go.Layout(title="<b>Average Book-Price per Genre</b>", height=500, width=1300, autosize=False,
-                font=dict( size=15), yaxis=dict(title='Price of Books'),xaxis = dict(title='Genres'))
+                       font=dict(size=15), yaxis=dict(title='Price of Books'), xaxis=dict(title='Genres'))
 
     figure = go.Figure(data=data, layout=layout)
-    most_priciest_genres_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
-                                        show_link=False)
-    context["most_priciest_genres_div"] = most_priciest_genres_div
+    priciest_genres_div = opy.plot(figure, auto_open=False, output_type='div',
+                                   show_link=False)  # config={"displayModeBar": False},
+    context["priciest_genres_div"] = priciest_genres_div
 
     # code commented on purpose
     # chart-4: wordcloud - popular word by decade
@@ -369,10 +383,15 @@ def overview(request):
     #
     # ctr = 1
     # for key, value in words_dict.items():
-    #     text = ' '.join(str(v) for v in value)
-    #     words_dict[key] = text
+    #     temp_value = [x for x in value if x != []]
+    #     text = ' '.join(str(v) for v in temp_value)
+    #     #text = text.translate(string.maketrans("",""), string.punctuation)
+    #     table = str.maketrans({key: None for key in string.punctuation})
+    #     new_text = str(text.translate(table))
+    #     words_dict[key] = new_text
     #     wc = WordCloud(background_color="white",
     #                    max_words=200,
+    #                    margin=10,
     #                    mask=mask,
     #                    color_func=random_color_func).generate(text)
     #     default_colors = wc.to_array()
@@ -385,30 +404,29 @@ def overview(request):
     #     plt.savefig("../Brie/app/static/img/image"+str(ctr)+".png")
     #     plt.close(fig)
     #     ctr += 1
-    #
 
-    #chart-5: #Pages per decade
-    for i in range (len(number_of_pages_by_years)):
-        value = number_of_pages_by_years[i]/number_of_books_by_years[i]
+    # chart-5: #Pages per decade
+    for i in range(len(number_of_pages_by_years)):
+        value = number_of_pages_by_years[i] / number_of_books_by_years[i]
         number_of_pages_values.append(value)
 
     trace = go.Scatter(
         x=chart_labels,
-        y=number_of_pages_values, mode="lines+markers+text", textposition = "top", text=number_of_pages_values,
-         connectgaps=True, hoverinfo='y')
+        y=number_of_pages_values, mode="lines+markers+text", textposition="top", text=number_of_pages_values,
+        connectgaps=True, hoverinfo='y')
 
     data = go.Data([trace])
     layout = go.Layout(title="<b>Average Number of Pages by Year</b>", height=500, width=1100,
-                       autosize=False, font=dict( size=15),
+                       autosize=False, font=dict(size=15),
                        yaxis=dict(title='Number of Pages', range=[0, 1000]),
                        xaxis=dict(title='Years')
                        )
     figure = go.Figure(data=data, layout=layout)
-    avg_pages_per_yrange_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
-                                        show_link=False)
+    avg_pages_per_yrange_div = opy.plot(figure, auto_open=False, output_type='div',
+                                        show_link=False)  # config={"displayModeBar": False},
     context["avg_pages_per_yrange_div"] = avg_pages_per_yrange_div
 
-    #chart-6: #Books per language
+    # chart-6: #Books per language
 
     for year, lang in book_languages_dict.items():
         language_count_dict[year] = dict(Counter(lang))
@@ -437,8 +455,7 @@ def overview(request):
     genre_count[key] = ''.join(genre_count[key])
     chart_values.append(genre_count[key])
 
-
-    #get top 3 languages per year
+    # get top 3 languages per year
     for i in range(5):
         language_label = []
         language_value = []
@@ -460,11 +477,11 @@ def overview(request):
     layout = go.Layout(title="<b>Top Languages by Years</b>", height=600, width=550,
                        autosize=False, font=dict(size=15))
     figure = go.Figure(data=data, layout=layout)
-    languages_by_year_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
-                             show_link = False)
+    languages_by_year_div = opy.plot(figure, auto_open=False, output_type='div',
+                                     show_link=False)  # config={"displayModeBar": False},
     context["languages_by_year_div"] = languages_by_year_div
 
-    #chart-7: Number of books by month: bubble chart
+    # chart-7: Number of books by month: bubble chart
 
     book_months_dict = collections.OrderedDict(sorted(book_months_dict.items()))
 
@@ -474,13 +491,14 @@ def overview(request):
     for month, count in book_months_dict.items():
         month_counts.append(count)
 
-    months_ranked = {key: rank for rank, key in enumerate(sorted(book_months_dict, key=book_months_dict.get, reverse=False), 1)}
+    months_ranked = {key: rank for rank, key in
+                     enumerate(sorted(book_months_dict, key=book_months_dict.get, reverse=False), 1)}
 
     marker_size = [1 for i in range(13)]
 
     for i in range(12):
-        marker_size[i] = months_ranked[i+1] *5
-        if marker_size[i]<=5:
+        marker_size[i] = months_ranked[i + 1] * 5
+        if marker_size[i] <= 5:
             marker_size[i] = 10
 
     trace = go.Scatter(
@@ -491,7 +509,7 @@ def overview(request):
             color=['rgb(93, 164, 214)', 'rgb(255, 144, 14)',
                    'rgb(44, 190, 101)', 'rgb(255, 165, 124)', 'rgb(255, 65, 54)', '#981313',
                    '#b300b3', '#ff9900', '#578eb0', '#d20040', '#00fdaa', '#8ce55f'],
-            opacity=[0.6]*12,
+            opacity=[0.6] * 12,
             size=marker_size))
 
     data = [trace]
@@ -500,11 +518,11 @@ def overview(request):
                        yaxis=dict(title='Number of Books'),
                        xaxis=dict(title='Months'))
     figure = go.Figure(data=data, layout=layout)
-    books_by_month_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
-                                        show_link=False)
+    books_by_month_div = opy.plot(figure, auto_open=False, output_type='div',
+                                  show_link=False)  # config={"displayModeBar": False},
     context["books_by_month_div"] = books_by_month_div
 
-    #chart-8: Pages vs Price of books per year_range
+    # chart-8: Pages vs Price of books per year_range
     price_labels = []
     pages_labels = []
 
@@ -513,8 +531,8 @@ def overview(request):
     for pages, price in pages_price_dict.items():
         sum = 0
         for p in price:
-            sum+=p
-        avg = sum/len(price)
+            sum += p
+        avg = sum / len(price)
         pages_labels.append(pages)
         price_labels.append(round(avg, 2))
 
@@ -531,13 +549,10 @@ def overview(request):
                        xaxis=dict(title='Number of Pages'))
 
     figure = go.Figure(data=data, layout=layout)
-    avg_price_per_page_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
-                                        show_link=False)
+    avg_price_per_page_div = opy.plot(figure, auto_open=False, output_type='div',
+                                      show_link=False)  # config={"displayModeBar": False},
     context["avg_price_per_page_div"] = avg_price_per_page_div
-
     return render(request, 'app/overview.html', context)
-
-
 
 
 def publishers(request):
@@ -754,6 +769,57 @@ def publishers(request):
 
     context["books_pub_author_div"] = mix_div
 
+    # Genres by Publishers
+    top_genres = ["Fantasy", "Historical", "Mystery", "Nonfiction", "Young Adult", "Classics"]
+
+    genre_book_count_dict = dict()
+    for genre in top_genres:
+        book_count_list = []
+        for publisher in publisher_names:
+            book_count = books_collection.find({"genres.0": genre, "publication": publisher}).count()
+            book_count_list.append(book_count)
+        genre_book_count_dict[genre] = book_count_list
+
+    trace1 = go.Bar(
+        x=publisher_names,
+        y=genre_book_count_dict["Fantasy"],
+        name='Fantasy'
+    )
+    trace2 = go.Bar(
+        x=publisher_names,
+        y=genre_book_count_dict["Historical"],
+        name='Historical'
+    )
+    trace3 = go.Bar(
+        x=publisher_names,
+        y=genre_book_count_dict["Mystery"],
+        name='Mystery'
+    )
+    trace4 = go.Bar(
+        x=publisher_names,
+        y=genre_book_count_dict["Nonfiction"],
+        name='Nonfiction'
+    )
+    trace5 = go.Bar(
+        x=publisher_names,
+        y=genre_book_count_dict["Young Adult"],
+        name='Young Adult'
+    )
+    trace6 = go.Bar(
+        x=publisher_names,
+        y=genre_book_count_dict["Classics"],
+        name='Classics'
+    )
+
+    data = [trace1, trace2, trace3, trace4, trace5, trace6]
+    layout = go.Layout(title='<b>Genre published by Publishers</b>', barmode='stack',
+                       yaxis=dict(title='Number of Books'))
+
+    mig_fig = {'data': data, 'layout': layout}
+    mix_div = plotly.offline.plot(mig_fig, output_type="div", include_plotlyjs=False, link_text="", show_link="False")
+
+    context["genre_by_publishers"] = mix_div
+
     return render(request, 'app/publishers.html', context)
 
 
@@ -894,19 +960,28 @@ def authors(request):
 
     author_ratings = books_collection.aggregate([{"$match": {"author": {"$in": bestsellers_authors}}},
                                                  {"$group": {"_id": "$author", "count": {"$sum": 1},
-                                                             "avgRating": {"$avg": "$rating"}}}])
+                                                             "avgRating": {"$avg": "$rating"}}},
+                                                 {"$sort": {"avgRating": -1}}])
     ratings_for_author = []
+    sorted_authors = []
+    sorted_price = []
     for row in author_ratings:
+        print(row)
         rating = "%.2f" % row["avgRating"]
         ratings_for_author.append(rating)
+        sorted_authors.append(row["_id"])
+
+    for author in sorted_authors:
+        auth_index = bestsellers_authors.index(author)
+        sorted_price.append(bestsellers_value[auth_index])
 
     trace1 = Scatter(
-        x=bestsellers_authors,
-        y=bestsellers_value,
+        x=sorted_authors,
+        y=sorted_price,
         name='Value in 100 millions'
     )
     trace2 = Bar(
-        x=bestsellers_authors,
+        x=sorted_authors,
         y=ratings_for_author,
         name='Average Rating',
         marker=dict(color='rgb(163, 163, 117)')
@@ -969,7 +1044,82 @@ def authors(request):
 
 
 def evaluation(request):
-    return render(request, 'app/evaluation.html')
+    books = books_collection.find()
+    success = 0
+    failure = 0
+
+    for book in books:
+        actual_genres = book["genres"]
+        genre_dissect_dict = book["genre_dissect"]
+        hits = 1
+        for genre in genre_dissect_dict:
+            if genre == "crime":
+                if "Crime" in actual_genres or "Mystery" in actual_genres or "Thriller" in actual_genres\
+                        or "Detective" in actual_genres or "Suspense" in actual_genres:
+                    hits += 1
+            elif genre == "fantasy":
+                if "Fantasy" in actual_genres or "Childrens" in actual_genres or "Urban Fantasy" in actual_genres\
+                        or "Fairies" in actual_genres or "Vampires" in actual_genres or "Horror" in actual_genres\
+                        or "Paranormal" in actual_genres:
+                    hits += 1
+            elif genre == "young-adult":
+                if "Young Adult" in actual_genres or "Adventure" in actual_genres:
+                    hits += 1
+            elif genre == "romance":
+                if "Romance" in actual_genres or "Womens Fiction" in actual_genres or "Chick Lit" in actual_genres:
+                    hits += 1
+            elif genre == "comedy":
+                if "Comedy" in actual_genres or "Humour" in actual_genres:
+                    hits += 1
+            elif genre == "dystopia":
+                if "Dystopia" in actual_genres or "Vampires" in actual_genres:
+                    hits += 1
+            elif genre == "action":
+                if "Action" in actual_genres:
+                    hits += 1
+            elif genre == "historical":
+                if "Historical" in actual_genres or "Historical Fiction" in actual_genres or \
+                                "Classics" in actual_genres or "Contemporary" in actual_genres or \
+                                "War" in actual_genres:
+                    hits += 1
+            elif genre == "non-fiction":
+                if "Nonfiction" in actual_genres or "Cultural" in actual_genres or "Politics" in actual_genres\
+                        or "Writing" in actual_genres or "Essays" in actual_genres or "Literature" in actual_genres\
+                        or "Autobiography" in actual_genres:
+                    hits += 1
+            elif genre == "science-fiction":
+                if "Science Fiction" in actual_genres or "Science" in actual_genres:
+                    hits += 1
+            elif genre == "self-help":
+                if "Self Help" in actual_genres or "Christianity" in actual_genres or "Autobiography" in actual_genres \
+                        or "Literature" in actual_genres or "Psychology" in actual_genres\
+                        or "Business" in actual_genres:
+                    hits += 1
+            if hits == 2:
+                break
+        if hits >= 2:
+            success += 1
+        else:
+            failure += 1
+
+    print(success)
+    print(failure)
+
+    context = dict()
+    colors = ['#8EAA5D', '#DB3A34']
+
+    trace = go.Pie(labels=["Success - More than 2 Hits", "Failure - Lesser than 2 Hits"], values=[success, failure],
+                   marker=dict(colors=colors))
+    data = go.Data([trace])
+    layout = go.Layout(title="<b>Evaluation of Content-Genre Dissection</b>", height=700, width=700,
+                       autosize=False)
+    figure = go.Figure(data=data, layout=layout)
+    genre_eval_div = opy.plot(figure, auto_open=False, output_type='div',
+                              config={"displayModeBar": False}, show_link=False)
+
+    context["genre_eval_div"] = genre_eval_div
+
+    return render(request, 'app/evaluation.html', context)
 
 
 def get_recommendations(request):
@@ -1047,7 +1197,6 @@ def get_recommendations(request):
         for word in tokens:
             dislike_words_dict[word] += 1
         book_title = book["title"]
-        print(book_title)
         series_name = ""
         if "#" in book_title and "(" in book_title:
             brack_index = book_title.find("(")
@@ -1056,7 +1205,6 @@ def get_recommendations(request):
         if len(series_name) > 0:
             dislike_series.append(series_name)
 
-    print(dislike_series)
     # Values needed for probability calculation
     total_words_like = sum(like_words_dict.values())
     total_words_dislike = sum(dislike_words_dict.values())
@@ -1080,8 +1228,9 @@ def get_recommendations(request):
         real_sorted_genre_list.append(w)
         real_sorted_genre_scores.append(real_genre_dict[w])
 
+    print(real_sorted_genre_list)
     has_child = False
-    if "Childrens" in real_sorted_genre_list[0:4]:
+    if "Childrens" in real_sorted_genre_list[0:2]:
         has_child = True
 
     book_suggestion_score_dict = dict()
@@ -1105,7 +1254,6 @@ def get_recommendations(request):
 
         actual_book_genres = book["genres"]
         score_multiplier = 0
-        at_least_one = False
         for genre in real_sorted_genre_list[0:4]:
             if genre in actual_book_genres[0:4]:
                 if not has_child and "Childrens" in actual_book_genres[0:4]:
