@@ -1106,10 +1106,10 @@ def evaluation(request):
     print(failure)
 
     context = dict()
-    colors = ['#8EAA5D', '#DB3A34']
+    colors = ['#12BA34', '#DF2935']
 
     trace = go.Pie(labels=["Success - More than 2 Hits", "Failure - Lesser than 2 Hits"], values=[success, failure],
-                   marker=dict(colors=colors))
+                   marker=dict(colors=colors), textfont=dict(size=22))
     data = go.Data([trace])
     layout = go.Layout(title="<b>Evaluation of Content-Genre Dissection</b>", height=700, width=700,
                        autosize=False)
@@ -1334,7 +1334,7 @@ def get_recommendations(request):
     words_table_div = opy.plot(figure, auto_open=False, output_type='div', config={"displayModeBar": False},
                                show_link=False)
 
-    trace = go.Pie(labels=real_sorted_genre_list[0:5], values=real_sorted_genre_scores[0:5])
+    trace = go.Pie(labels=real_sorted_genre_list[0:5], values=real_sorted_genre_scores[0:5], textfont=dict(size=18))
     data = go.Data([trace])
     layout = go.Layout(title="<b>Genre Dissection of you taste</b>", height=500, width=500,
                        autosize=False)
