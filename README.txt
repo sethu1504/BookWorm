@@ -2,7 +2,7 @@ Book Recommendation and Intelligence Engine (B.R.I.E.) - README FILE
 
 This text file contains a general overview of BRIE's codebase denoting which parts of the codebase contain what functionalities
 
-Folder src - Entire data collection and data loading. Contains the source code for web scraping, data cleaning, recommendation component and more.
+Folder src - Entire data collection and data loading.
 	Folder gcp_data_loading - Trials to load data into Google Cloud Platform 
 	Folder data_migration - Loading appropriate data into MySQL and Mongo database
 
